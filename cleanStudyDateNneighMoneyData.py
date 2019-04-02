@@ -136,3 +136,8 @@ studyV = studies
 birthMat = bfn
 neighbourV = nneighNum
 moneyV = nummoneyQa
+
+print('done')
+
+if __name__ == "__main__":
+    dataF.to_csv('ODI-2019-clean.csv', sep=';')
