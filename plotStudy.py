@@ -24,3 +24,17 @@ df = df.append(ts)
 df = df.rename(index=str, columns={0:"count"})
 df = df.rename({"MASTER DIGITAL BUSINESS AND INNOVATION":"DBI"},axis='index')
 df.plot(kind='bar')
+
+nneigh = dataF["neighbours"]
+#neighc = ct.Counter(nneigh)
+#nneigh.plot(kind='bar')
+#df = pd.DataFrame.from_dict(neighc, orient = 'index')
+#df.plot(kind='bar')
+nneigh[nneigh>470] = 470
+plt.hist(nneigh, bins =100,rwidth=0.85)
+plt.hist(nneigh[nneigh<11],rwidth=0.85)
+
+sett = dataF["moneyV"]
+sett[sett>100] = 100
+plt.hist(sett, bins =100)
+plt.hist(sett[sett<10],rwidth=0.85)
