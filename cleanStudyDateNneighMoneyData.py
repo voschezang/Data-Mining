@@ -10,7 +10,7 @@ import pandas as pd
 import re
 
 dataF = pd.read_csv('ODI-2019-csv.csv', sep=';')
-# dataF = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\ODI-2019-csv.csv', sep=';')
+dataF = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\ODI-2019-csv.csv', sep=';')
 studies = (dataF.ix[:, 'What programme are you in?']).str.upper()
 # various spellings of same study taken together
 studies[studies.str.contains("COMPUTATIONAL SCIENCE")] = "CS"
@@ -138,6 +138,13 @@ neighbourV = nneighNum
 moneyV = nummoneyQa
 
 print('done')
+dataNew = dataF
+dataNew= dataNew.drop(dataNew.columns[11],axis=1)
+dataNew = dataNew.drop(["What programme are you in?","When is your birthday (date)?","Number of neighbors sitting around you?"],axis=1)
+dataNew["study"] = studyV
+dataNew = dataNew.join(birthMat)
+dataNew["neighbours"] = neighbourV
+dataNew["moneyV"] = nummoneyQa
 
 if __name__ == "__main__":
-    dataF.to_csv('ODI-2019-clean.csv', sep=';')
+    dataNew.to_csv('ODI-2019-clean.csv', sep=';')
