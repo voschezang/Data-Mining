@@ -110,6 +110,9 @@ for i in range(int(bfn.size / 3)):
         bfn.iloc[[i], [1]] = bfn.iloc[[i], [0]]
         bfn.iloc[[i], [0]] = day
 
+# rename columns
+bfn.columns = ['Day', 'Month', 'Year']
+
 # get number of neighbours, replace missing by median
 nneigh = dataF.iloc[:, [9]]
 nneighNum = nneigh.apply(pd.to_numeric, errors='coerce')
@@ -132,6 +135,7 @@ moneyQa = moneyQa.str.replace(".*[/]{1}.*", "0.21")
 nummoneyQa = moneyQa.apply(pd.to_numeric, errors='coerce')
 nummoneyQa[nummoneyQa.isna()] = nummoneyQa.median()
 
+# create df with new data
 studyV = studies
 birthMat = bfn
 neighbourV = nneighNum
@@ -141,12 +145,28 @@ dataNew = dataF
 dataNew = dataNew.drop(dataNew.columns[11], axis=1)
 dataNew = dataNew.drop(["What programme are you in?", "When is your birthday (date)?",
                         "Number of neighbors sitting around you?"], axis=1)
-dataNew["study"] = studyV
+dataNew["Program"] = studyV
 dataNew = dataNew.join(birthMat)
-dataNew["neighbours"] = neighbourV
-dataNew["moneyV"] = nummoneyQa
+dataNew["Neighbours"] = neighbourV
+dataNew["Money"] = nummoneyQa
 
+# rename remaining columns
+keys = {'What programme are you in?': 'Program',
+        'Have you taken a course on machine learning?': 'ML',
+        'Have you taken a course on information retrieval?': 'IR',
+        'Have you taken a course on statistics?': 'Stat',
+        'Have you taken a course on databases?': 'DB',
+        'What is your gender?': 'Gender',
+        'Chocolate makes you.....': 'Chocolate',
+        'Did you stand up?': 'Stand up',
+        'Give a random number': 'Rand',
+        'Time you went to be Yesterday': 'Bedtime',
+        'What makes a good day for you (1)?': 'Good day (1)',
+        'What makes a good day for you (2)?': 'Good day (2)',
+        'What is your stress level (0-100)?': 'Stress level'}
+dataNew.rename(index=str, columns=keys, inplace=True)
 
 print('done')
+print(dataNew.keys())
 if __name__ == "__main__":
     dataNew.to_csv('ODI-2019-clean.csv', sep=';')
