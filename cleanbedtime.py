@@ -5,6 +5,7 @@ from dateutil.parser import parse
 
 def time_parser(row):
 	numbers = []
+	comma = 0
 	print(row)
 
 	for c in row:
@@ -12,6 +13,8 @@ def time_parser(row):
 			numbers.append(c)
 		if c == ',':
 			numbers.insert(0, '0')
+			comma = 1
+		print(numbers)
 
 	if len(numbers) < 1:
 		row = '00:00'
@@ -28,8 +31,11 @@ def time_parser(row):
 			numbers.append('0')
 			numbers.append('0')
 
-	if len(numbers) == 3:
+	if len(numbers) == 3 and comma != 1:
 		numbers.insert(0, '0')
+
+	if len(numbers) == 3 and comma == 1:
+		numbers.append('0')
 
 	if len(numbers) > 1:
 		if numbers[1] == ':':
@@ -38,7 +44,7 @@ def time_parser(row):
 	if len(numbers) == 4:
 		if numbers[0] == '2' and numbers[1] == '4':
 			numbers[0] = '0'
-			numbers[1] = '4'
+			numbers[1] = '0'
 	
 	numbers.insert(2, ':')
 	row = ''.join(map(str, numbers[:5]))
