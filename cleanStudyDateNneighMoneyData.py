@@ -101,17 +101,17 @@ for i in range(birthDates.size):
         birthFrame.iloc[[i], [2]] = birthDates[i][4:8]
 
 for i in range(birthDates.size):
-    if birthFrame.iloc[[i],[0]].isna().squeeze():
+    if birthFrame.iloc[[i], [0]].isna().squeeze():
         try:
-            ymd = parse(birthDates[i],fuzzy=True)
+            ymd = parse(birthDates[i], fuzzy=True)
             birthFrame.iloc[[i], [0]] = ymd.day
             birthFrame.iloc[[i], [1]] = ymd.month
             birthFrame.iloc[[i], [2]] = ymd.year
             if ymd.year == 2019:
-                birthFrame.iloc[[i],[2]] = ""
+                birthFrame.iloc[[i], [2]] = ""
         except:
             print("io")
-            #do nothing
+            # do nothing
 
 
 # make into numerics, change '95 into 1995, swap MM-DD-YYYY to DD-MM-YYYY if obvious
