@@ -8,6 +8,7 @@ def time_parser(row):
 	comma = 0
 	print(row)
 
+	# make list containing all numbers of string
 	for c in row:
 		if c.isdigit():
 			numbers.append(c)
@@ -16,93 +17,52 @@ def time_parser(row):
 			comma = 1
 		print(numbers)
 
-	if len(numbers) < 1:
-		row = '00:00'
-		row = parse(row)
-		row = row.time()
+	# calculate number of numbers in list
+	len_num = len(numbers)
+
+	# when string doesn't contain any numbers return 'UNKNOWN'
+	if len_num < 1:
+		row = 'Unknown'
 		return row
 
-	if len(numbers) == 1:
+	# put numbers around entered numbers so it becomes the right format to parse
+	if len_num == 1:
 		numbers.insert(0, '0')
 		numbers.append('0')
 		numbers.append('0')
 
-	if len(numbers) == 2:
+	if len_num == 2:
 			numbers.append('0')
 			numbers.append('0')
 
-	if len(numbers) == 3 and comma != 1:
+	if len_num == 3 and comma != 1:
 		numbers.insert(0, '0')
 
-	if len(numbers) == 3 and comma == 1:
+	if len_num == 3 and comma == 1:
 		numbers.append('0')
 
-	if len(numbers) > 1:
+	if len_num > 1:
 		if numbers[1] == ':':
 			numbers.insert(0, '0')
 
+	# if first two numbers are 24 or higher change to 00
 	if len(numbers) == 4:
 		if numbers[0] == '2' and numbers[1] == '4':
 			numbers[0] = '0'
 			numbers[1] = '0'
 	
+	# add ':' in the middle to get the right format for parsing
 	numbers.insert(2, ':')
 	row = ''.join(map(str, numbers[:5]))
 	if numbers[0] == '1':
 			if numbers[1] == '0' or numbers[1] == '1':
 				row = row + ' pm'
-
+	
+	# parse all times to time format HH:MM:SS
 	row = parse(row)
 	row = row.time()
 	print(row)
 	return row
-
-
-	# if row == '110305pm' or row == 'x':
-	# 	print("fukyou")
-	# 	row = '00:00'
-	# if row == '23u' or row == '23:00 uur':
-	# 	row = '23:00'
-	# if '~' in row:
-	# 	row = row.replace('~', '')
-	# 	print(row)
-	
-	# if 'am' in row:
-	# 	row = row.replace('am', '')
-	# 	print(row)
-
-	# if len(row) == 1:
-	# 	if int(row[0]) <= 6:
-	# 		row = '0' + row[0] + " am"
-	# 	if int(row[0]) > 6:
-	# 		row = '0' + row + " pm"
-
-	# if ',' or '.' in row:
-	# 	row = row.replace(',', ':')
-	# 	row = row.replace('.', ':')
-	# 	if len(row) == 4 and row[2] == ':':
-	# 		row = row + '0'
-	# 	if 'p:m' in row:
-	# 		print("ko")
-	# 		row = row.replace('p:m', 'pm')
-	# 	if 'a:m' in row:
-	# 		row = row.replace('a:m', 'am')
-
-	# if row.isdigit():
-	# 	if len(row) > 3:
-	# 		row = row[:2] + ':' + row[2:]
-	# 	elif len(row) == 3 and row[0] > 2:
-	# 		row = '0' + row[:1] + ':' + row[2:]
-	# 	else:
-	# 		row = row[:2] + ':00'
-
-	# if ':' in row and len(row) == 5:
-	# 	if int(row[1]) >= 4 and int(row[0]) >= 2:
-	# 		row = '00'+ row[:2]
-
-	# if not any(c.isdigit() for c in row):
-	# 	print("aj")
-	# 	row = '00:00'
 
 studentinfo = pd.read_csv('ODI-2019-csv.csv', sep=';')
 
