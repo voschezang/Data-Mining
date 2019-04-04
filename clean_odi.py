@@ -13,7 +13,9 @@ dataF = pd.read_csv('ODI-2019-csv.csv', sep=';')
 moneyQa, nummoneyQa = functions.clean_money(dataF)
 
 # clean rest
+functions.clean_stress_level(dataF)
 functions.clean_experience(dataF)
+functions.clean_chocolate(dataF)
 
 # create df with new data
 studyV = functions.clean_studies(dataF)

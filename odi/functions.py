@@ -152,6 +152,22 @@ def clean_money(dataF):
     return moneyQa, nummoneyQa
 
 
+def clean_stress_level(dataF):
+    field = 'What is your stress level (0-100)?'
+    # for i in data[field].size:
+    #     if data[field][i]
+    # dataF[field].clip(0, 100)
+
+
+def clean_chocolate(dataF):
+    field = 'Chocolate makes you.....'
+    keys = ['Slim', 'Fat', 'Neither', 'Unknown']
+    keys_old = ['SLIM', 'FAT', 'NEITHER',
+                'I HAVE NO IDEA WHAT YOU ARE TALKING ABOUT']
+    dataF[field] = clean_experience_field(
+        dataF[field], keys_old, keys)
+
+
 def clean_experience(studentinfo):
     field = 'Have you taken a course on statistics?'
     keys = ['Yes', 'No', 'Unknown']
