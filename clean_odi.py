@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Cleans part of ODI file on various questions
-Cleans study, birthdates, number of neighbours and money expected to return
+Cleans ODI
 Nans in neighbours and money expected are replace by median, others left empty
 """
 

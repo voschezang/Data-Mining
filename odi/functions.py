@@ -153,34 +153,34 @@ def clean_money(dataF):
 
 
 def clean_experience(studentinfo):
-    stat = 'Have you taken a course on statistics?'
-    stat_exp = (
-        studentinfo[stat]).str.upper()
-    stat_exp[stat_exp.str.contains("MU")] = 'YES'
-    stat_exp[stat_exp.str.contains("SIGMA")] = 'NO'
-    studentinfo[stat] = stat_exp
+    field = 'Have you taken a course on statistics?'
+    keys = ['Yes', 'No', 'Unknown']
+    keys_old = ['MU', 'SIGMA', 'UNKNOWN']
+    studentinfo[field] = clean_experience_field(
+        studentinfo[field], keys_old, keys)
 
-    # check if machine learning experience values are all valid
-    ml_exp = (
-        studentinfo['Have you taken a course on machine learning?']).str.upper()
-    for row in ml_exp:
-        if row != 'YES' and row != 'NO' and row != 'UNKNOWN':
-            row = 'UNKNOWN'
-    studentinfo['Have you taken a course on machine learning?'] = ml_exp
+    field = 'Have you taken a course on machine learning?'
+    keys = ['Yes', 'No', 'Unknown']
+    keys_old = [x.upper() for x in keys]
+    studentinfo[field] = clean_experience_field(
+        studentinfo[field], keys_old, keys)
 
-    # check if information retrieval experience values are all valid
-    ir_exp = (
-        studentinfo['Have you taken a course on information retrieval?']).str.upper()
-    for row in ir_exp:
-        if row != 1 and row != 0 and row != 'UNKNOWN':
-            row = 'UNKNOWN'
-    studentinfo['Have you taken a course on information retrieval?'] = ir_exp
+    field = 'Have you taken a course on databases?'
+    keys = ['Yes', 'No', 'Unknown']
+    keys_old = ["JA", "NEE", "UNKNOWN"]
+    studentinfo[field] = clean_experience_field(
+        studentinfo[field], keys_old, keys)
 
-    # change databases experience values to YES/NO/UNKOWN
-    db_exp = (studentinfo['Have you taken a course on databases?']).str.upper()
-    db_exp[db_exp.str.contains("JA")] = 'YES'
-    db_exp[db_exp.str.contains("NEE")] = 'NO'
-    for row in db_exp:
-        if row != "YES" and row != "NO" and row != 'UNKNOWN':
-            row = 'UNKNOWN'
-    studentinfo['Have you taken a course on databases?'] = db_exp
+    field = 'Have you taken a course on information retrieval?'
+    keys = ['Yes', 'No', 'Unknown']
+    keys_old = ['1', '0', 'UNKNOWN']
+    studentinfo[field] = clean_experience_field(
+        studentinfo[field], keys_old, keys)
+
+
+def clean_experience_field(data, keys_old, keys):
+    data = data.str.upper()
+    data[~data.isin(keys_old)] = keys[-1]
+    for k1, k2 in zip(keys_old, keys):
+        data[data.str.contains(k1)] = k2
+    return data
