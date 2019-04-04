@@ -122,7 +122,7 @@ print(np.mean(svmScore))
 svmModel.fit(trainX,trainY)
 print(svmModel.score(testX,testY))
 
-tuned_parameters = [{'n_estimators':[10,50,75,100,150,200], 'max_depth':[1, 2, 3, 4, 5],'min_samples_split' :[2,4,6]}]
+tuned_parameters = [{'n_estimators':[50,75,100,150,200], 'max_depth':[2, 3, 4, 5],'min_samples_split' :[2,4]}]
 rfModel = ms.GridSearchCV(es.RandomForestClassifier(),tuned_parameters,cv=5,scoring='accuracy')
 rfScore = ms.cross_val_score(rfModel, trainX, trainY, scoring='accuracy',cv=5)
 print(np.mean(rfScore))
@@ -139,9 +139,8 @@ nnetModel.fit(trainX,trainY)
 print(nnetModel.score(testX,testY))
 
 #train best final model
-bestModel = es.GradientBoostingClassifier(learning_rate = 0.2, loss='exponential',max_depth=3, min_samples_split=4, n_estimators=100)
+bestModel = rfModel
 bestModel.fit(fullTrainX,fullTrainY)
-
 #Redo data transformations for test set
 dataT = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\titanic\\test.csv', sep=',')
 dataT = dataT.drop('Name',axis=1)
@@ -150,6 +149,7 @@ dataT = dataT.drop('Sex', axis=1)
 
 # Fit regression for missing ages
 dataT["isAgeImp"] = dataT["Age"].isna()
+dataT.loc[dataT["Fare"].isna(),"Fare"] = dataT["Fare"].mean()
 #reg = linear_model.LinearRegression()
 #nonNaAge = dataT[dataT["Age"].notna()]
 #reg.fit(nonNaAge[["Fare","isMale","Parch","SibSp"]],nonNaAge["Age"])
