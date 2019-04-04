@@ -21,8 +21,8 @@ rcParams['font.family'] = 'serif'
 rcParams['font.size'] = 14
 
 #Read in data, and prepare
-dataF = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\titanic\\train.csv', sep=',')
-#dataF = pd.read_csv('train.csv')
+#dataF = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\titanic\\train.csv', sep=',')
+dataF = pd.read_csv('train.csv')
 dataF = dataF.drop('Name',axis=1)
 dataF["isMale"] = dataF["Sex"] == "male"
 dataF = dataF.drop('Sex', axis=1)
@@ -41,7 +41,9 @@ plt.savefig('ageHist.pdf')
 dataF["Fare"].hist(rwidth=0.85,bins=20)
 plt.savefig('fareHist.pdf')
 dataF["SibSp"].hist(rwidth=0.85,bins=8)
+plt.savefig("SibHist.pdf")
 dataF["Parch"].hist(rwidth=0.85,bins=6)
+plt.savefig("ParchHist.pdf")
 
 #Split categorical into binaries
 dataF["isS"] = dataF["Embarked"] == "S"
@@ -201,5 +203,5 @@ predicts = bestModel.predict(dataT.loc[:,"Age":])
 finalDF = pd.DataFrame()
 finalDF["PassengerId"] = dataT["PassengerId"]
 finalDF["Survived"] = predicts
-finalDF.to_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\titanic\\titanicpredictions.csv', sep=',',index=False)
+#finalDF.to_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\titanic\\titanicpredictions.csv', sep=',',index=False)
 finalDF.to_csv('titanicpredictions.csv',sep=',',index=False)
