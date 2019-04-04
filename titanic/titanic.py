@@ -22,6 +22,7 @@ rcParams['font.size'] = 14
 
 #Read in data, and prepare
 dataF = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\titanic\\train.csv', sep=',')
+#dataF = pd.read_csv('train.csv')
 dataF = dataF.drop('Name',axis=1)
 dataF["isMale"] = dataF["Sex"] == "male"
 dataF = dataF.drop('Sex', axis=1)
@@ -48,18 +49,24 @@ dataF["isQ"] = dataF["Embarked"] == "Q"
 dataF["lowClass"] = dataF["Pclass"]==1
 dataF["highClass"] = dataF["Pclass"]==3
 dataF= dataF.drop(["Embarked","Ticket","Pclass"],axis=1)
-dataF["highPrice"] = dataF["Fare"]>30
-dataF["lowPrice"] = dataF["Fare"]<10
+#dataF["highPrice"] = dataF["Fare"]>30
+#dataF["lowPrice"] = dataF["Fare"]<10
 for room in ["A","B","C","D","E","F"]:
     dataF[room] = dataF["Cabin"].str.contains(room)
     dataF.loc[dataF[room].isna(),room] = False
 dataF= dataF.drop("Cabin",axis=1)
-dataF = dataF.drop("Fare",axis=1)
+#dataF = dataF.drop("Fare",axis=1)
 
-#normalise age
+#standardise age
 meanAge = dataF["Age"].mean()
 stdAge = dataF["Age"].std()
 dataF["Age"] =(dataF["Age"] - meanAge)/stdAge
+
+#standardise price with logs
+logP = np.log(dataF["Fare"]+0.1)
+meanLogP = np.mean(logP)
+stdLogP = np.std(logP)
+dataF["logP"] = (logP-meanLogP)/stdLogP
 #meanSibSp = dataF["SibSp"].mean()
 #stdSibSp = dataF["SibSp"].std()
 #dataF["SibSp"] =(dataF["SibSp"] - meanSibSp)/stdSibSp
@@ -67,11 +74,11 @@ dataF["Age"] =(dataF["Age"] - meanAge)/stdAge
 #stdParch = dataF["Parch"].std()
 #dataF["Parch"] =(dataF["Parch"] - meanParch)/stdParch
 
-#Split children/siblings into bins
-dataF["hasParch"] = dataF["Parch"]>0
-dataF["hasSibSp"] = dataF["SibSp"]>0
-dataF = dataF.drop(["Parch","SibSp"],axis=1)
+
+dataF["family"] = dataF["Parch"] + dataF["SibSp"]
+
 corrs = dataF.corr()
+dataF = dataF.drop(["Parch","SibSp"],axis=1)
 
 #Select variables
 dataF = dataF.drop(["A","F","Age","isQ"], axis=1)
@@ -91,7 +98,9 @@ fullTrainY = dataF["Survived"]
 
 #fit and train 3 models, select best
 gbc_tuned_parameters = [{'loss':['deviance','exponential'],'learning_rate':[0.1,0.01,0.2],'n_estimators':[50,75,100,150,200],'max_depth':[1, 2, 3, 4],'min_samples_split' :[2,4]}]
-gbc = ms.GridSearchCV(es.GradientBoostingClassifier(),gbc_tuned_parameters,cv=5)
+gbc = ms.GridSearchCV(es.GradientBoostingClassifier(),gbc_tuned_parameters,cv=5,scoring='accuracy')
+gbcScore = ms.cross_val_score(gbc, trainX, trainY, scoring='accuracy', cv=5)
+print(np.mean(gbcScore))
 gbc.fit(trainX,trainY)
 print(gbc.score(testX,testY))
 print(gbc.best_params_)
@@ -100,28 +109,32 @@ print(gbc.best_score_)
 gbcModel = es.GradientBoostingClassifier(learning_rate = 0.2, loss='exponential',max_depth=3, min_samples_split=4, n_estimators=100)
 gbcModel.fit(trainX,trainY)
 print(gbcModel.score(testX,testY))
-print(gbcModel.feature_importances_)
+print(gbc.feature_importances_)
+
+gbcModel.fit(trainX,trainY)
+print(gbcModel.score(testX,testY))
+
+tuned_parameters = [{'C':[0.01,0.1,1,10],'kernel':['linear','rbf'], 'gamma':['auto','scale']}]
+svmModel = ms.GridSearchCV(svm.SVC(),tuned_parameters, scoring= 'accuracy', cv=5)
+svmScore = ms.cross_val_score(svmModel, trainX, trainY, scoring='accuracy',cv=5)
+print(np.mean(svmScore))
+
+svmModel.fit(trainX,trainY)
+print(svmModel.score(testX,testY))
 
 tuned_parameters = [{'n_estimators':[10,50,75,100,150,200], 'max_depth':[1, 2, 3, 4, 5],'min_samples_split' :[2,4,6]}]
-rf = ms.GridSearchCV(es.RandomForestClassifier(),tuned_parameters,cv=5)
-rf.fit(trainX,trainY)
-print(rf.score(testX,testY))
-print(rf.best_params_)
-print(rf.best_score_)
+rfModel = ms.GridSearchCV(es.RandomForestClassifier(),tuned_parameters,cv=5,scoring='accuracy')
+rfScore = ms.cross_val_score(rfModel, trainX, trainY, scoring='accuracy',cv=5)
+print(np.mean(rfScore))
 
-rfModel = es.RandomForestClassifier()
 rfModel.fit(trainX,trainY)
 print(rfModel.score(testX,testY))
-print(rfModel.feature_importances_)
 
 tuned_parameters = [{'hidden_layer_sizes':[(5,2),(5),(10,2),(10,5),(4,2),(4,4),(5,5),np.arange(4,12)]}]
-nnet = ms.GridSearchCV(MLPClassifier(max_iter=1000,solver='lbfgs'),tuned_parameters,cv=5)
-nnet.fit(trainX,trainY)
-print(nnet.score(testX,testY))
-print(nnet.best_params_)
-print(nnet.best_score_)
+nnetModel = ms.GridSearchCV(MLPClassifier(max_iter=1000,solver='lbfgs'),tuned_parameters,cv=5,scoring='accuracy')
+nnetScore = ms.cross_val_score(nnetModel, trainX, trainY, scoring='accuracy',cv=5)
+print(np.mean(nnetScore))
 
-nnetModel = MLPClassifier(max_iter=1000,solver = 'lbfgs',hidden_layer_sizes=(5,5))
 nnetModel.fit(trainX,trainY)
 print(nnetModel.score(testX,testY))
 
@@ -134,50 +147,59 @@ dataT = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Minin
 dataT = dataT.drop('Name',axis=1)
 dataT["isMale"] = dataT["Sex"] == "male"
 dataT = dataT.drop('Sex', axis=1)
+
+# Fit regression for missing ages
 dataT["isAgeImp"] = dataT["Age"].isna()
-dataT.loc[dataT["Fare"].isna(),"Fare"] = dataT["Fare"].median()
-# dataT.loc[dataT["Age"].isna(),"Age"] = dataT["Age"].mean()
-reg = linear_model.LinearRegression()
+#reg = linear_model.LinearRegression()
 #nonNaAge = dataT[dataT["Age"].notna()]
 #reg.fit(nonNaAge[["Fare","isMale","Parch","SibSp"]],nonNaAge["Age"])
 agePreds = reg.predict(dataT[["Fare","isMale","Parch","SibSp"]])
 dataT.loc[dataT["Age"].isna(),"Age"] = agePreds[dataT["Age"].isna()]
-dataT["Age"].hist(rwidth=0.85,bins=20)
-plt.savefig('ageHist.pdf')
-dataT["Fare"].hist(rwidth=0.85,bins=20)
-plt.savefig('fareHist.pdf')
-dataT["SibSp"].hist(rwidth=0.85,bins=8)
-dataT["Parch"].hist(rwidth=0.85,bins=6)
-#dataT["hasCabin"] = dataT["Cabin"].notna()
-#dataT = dataT.drop("Cabin", axis=1)
+
+#Split categorical into binaries
 dataT["isS"] = dataT["Embarked"] == "S"
 dataT["isQ"] = dataT["Embarked"] == "Q"
 dataT["lowClass"] = dataT["Pclass"]==1
 dataT["highClass"] = dataT["Pclass"]==3
 dataT= dataT.drop(["Embarked","Ticket","Pclass"],axis=1)
-dataT["highPrice"] = dataT["Fare"]>30
-dataT["lowPrice"] = dataT["Fare"]<10
+#dataT["highPrice"] = dataT["Fare"]>30
+#dataT["lowPrice"] = dataT["Fare"]<10
 for room in ["A","B","C","D","E","F"]:
     dataT[room] = dataT["Cabin"].str.contains(room)
     dataT.loc[dataT[room].isna(),room] = False
 dataT= dataT.drop("Cabin",axis=1)
-dataT = dataT.drop("Fare",axis=1)
-meanAge = dataT["Age"].mean()
-stdAge = dataT["Age"].std()
+#dataT = dataT.drop("Fare",axis=1)
+
+#standardise age
+#meanAge = dataT["Age"].mean()
+#stdAge = dataT["Age"].std()
 dataT["Age"] =(dataT["Age"] - meanAge)/stdAge
+
+#standardise price with logs
+logP = np.log(dataT["Fare"]+0.1)
+#meanLogP = np.mean(logP)
+#stdLogP = np.std(logP)
+dataT["logP"] = (logP-meanLogP)/stdLogP
 #meanSibSp = dataT["SibSp"].mean()
 #stdSibSp = dataT["SibSp"].std()
 #dataT["SibSp"] =(dataT["SibSp"] - meanSibSp)/stdSibSp
 #meanParch = dataT["Parch"].mean()
 #stdParch = dataT["Parch"].std()
 #dataT["Parch"] =(dataT["Parch"] - meanParch)/stdParch
-dataT["hasParch"] = dataT["Parch"]>0
-dataT["hasSibSp"] = dataT["SibSp"]>0
+
+dataT["family"] = dataT["Parch"] + dataT["SibSp"]
+
 dataT = dataT.drop(["Parch","SibSp"],axis=1)
+
+#Select variables
+#sdataa = dataT
+#dataT=sdataa
+#dataT = dataT[["Survived","isMale","highClass","lowPrice","isS","B","highPrice","lowClass"]]
 
 #predict test set and export
 predicts = bestModel.predict(dataT.loc[:,"Age":])
 finalDF = pd.DataFrame()
 finalDF["PassengerId"] = dataT["PassengerId"]
 finalDF["Survived"] = predicts
-finalDF.to_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\titanic\\titanicpredictions.csv', sep=',')
+finalDF.to_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\titanic\\titanicpredictions.csv', sep=',',index=False)
+finalDF.to_csv('titanicpredictions.csv',sep=',',index=False)
