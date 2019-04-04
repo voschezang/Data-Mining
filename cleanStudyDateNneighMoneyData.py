@@ -8,6 +8,7 @@ Nans in neighbours and money expected are replace by median, others left empty
 import csv
 import pandas as pd
 import re
+from dateutil.parser import parse
 
 dataF = pd.read_csv('ODI-2019-csv.csv', sep=';')
 # dataF = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\ODI-2019-csv.csv', sep=';')
@@ -98,6 +99,20 @@ for i in range(birthDates.size):
         birthFrame.iloc[[i], [0]] = birthDates[i][0:2]
         birthFrame.iloc[[i], [1]] = birthDates[i][2:4]
         birthFrame.iloc[[i], [2]] = birthDates[i][4:8]
+
+for i in range(birthDates.size):
+    if birthFrame.iloc[[i],[0]].isna().squeeze():
+        try:
+            ymd = parse(birthDates[i],fuzzy=True)
+            birthFrame.iloc[[i], [0]] = ymd.day
+            birthFrame.iloc[[i], [1]] = ymd.month
+            birthFrame.iloc[[i], [2]] = ymd.year
+            if ymd.year == 2019:
+                birthFrame.iloc[[i],[2]] = ""
+        except:
+            print("io")
+            #do nothing
+
 
 # make into numerics, change '95 into 1995, swap MM-DD-YYYY to DD-MM-YYYY if obvious
 bfn = pd.DataFrame(index=dataF.index, columns=['day', 'month', 'year'])
