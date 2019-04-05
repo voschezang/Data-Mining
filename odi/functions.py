@@ -152,9 +152,14 @@ def clean_money(dataF):
     return moneyQa, nummoneyQa
 
 def clean_stress_levels(studentinfo):
-    # make list containing all numbers of string
+    '''
+    Cleans whole stress level serie.
+    '''
     stress_levels = (studentinfo['What is your stress level (0-100)?'])
-    for value in stress_levels:
+
+    # cleans stress level value to integers between 0 and 100
+    def clean_stress_value(value):
+        # make list containing all numbers of string
         numbers = []
         for c in value:
             if c.isdigit():
@@ -183,9 +188,11 @@ def clean_stress_levels(studentinfo):
         # check if number is 'Nan'
         if type(value) is float:
             value = 100
-        # if number is in string extract stress level
+        # else if number is in string extract stress level
         elif type(value) is str:
-            value = clean_stress_levels(value)
+            value = clean_stress_value(value)
+
+    return stress_levels
 
 def clean_chocolate(dataF):
     field = 'Chocolate makes you.....'
