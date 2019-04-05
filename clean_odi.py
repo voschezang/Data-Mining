@@ -12,8 +12,12 @@ dataF = pd.read_csv('ODI-2019-csv.csv', sep=';')
 # dataF = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\ODI-2019-csv.csv', sep=';')
 moneyQa, nummoneyQa = functions.clean_money(dataF)
 
+
+dataF['What is your stress level (0-100)?'] = functions.clean_stress_level(
+    dataF['What is your stress level (0-100)?'])
+
+
 # clean rest
-functions.clean_stress_levels(dataF)
 functions.clean_experience(dataF)
 functions.clean_chocolate(dataF)
 
@@ -25,13 +29,16 @@ moneyV = moneyQa  # TODO unused?
 
 dataNew = dataF
 dataNew = dataNew.drop(dataNew.columns[11], axis=1)
-dataNew = dataNew.drop(["What programme are you in?", "When is your birthday (date)?",
-                        "Number of neighbors sitting around you?", "Time you went to be Yesterday"], axis=1)
+dataNew = dataNew.drop(["What programme are you in?",
+                        "When is your birthday (date)?",
+                        "Number of neighbors sitting around you?",
+                        "Time you went to be Yesterday"], axis=1)
 dataNew["Programme"] = studyV
 dataNew = dataNew.join(birthMat)
 dataNew["Neighbours"] = neighbourV
 dataNew["Money"] = nummoneyQa
 dataNew["Bedtime"] = parse_bedtimes(dataF['Time you went to be Yesterday'])
+
 
 # rename remaining columns
 keys = {'What programme are you in?': 'Program',

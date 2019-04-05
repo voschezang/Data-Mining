@@ -152,11 +152,10 @@ def clean_money(dataF):
     return moneyQa, nummoneyQa
 
 
-def clean_stress_levels(studentinfo):
+def clean_stress_level(stress_levels):
     '''
     Cleans whole stress level serie.
     '''
-    stress_levels = (studentinfo['What is your stress level (0-100)?'])
 
     # cleans stress level value to integers between 0 and 100
     def clean_stress_value(value):
@@ -184,14 +183,14 @@ def clean_stress_levels(studentinfo):
         return value
 
     # put each value in stress level data to 0-100
-    for value in stress_levels:
+    for i, value in enumerate(stress_levels):
 
         # check if number is 'Nan'
         if type(value) is float:
-            value = 100
+            stress_levels[i] = 100
         # else if number is in string extract stress level
         elif type(value) is str:
-            value = clean_stress_value(value)
+            stress_levels[i] = clean_stress_value(value)
 
     return stress_levels
 
