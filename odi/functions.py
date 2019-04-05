@@ -151,13 +151,41 @@ def clean_money(dataF):
     nummoneyQa[nummoneyQa.isna()] = nummoneyQa.median()
     return moneyQa, nummoneyQa
 
+def clean_stress_levels(studentinfo):
+    # make list containing all numbers of string
+    stress_levels = (studentinfo['What is your stress level (0-100)?'])
+    for value in stress_levels:
+        numbers = []
+        for c in value:
+            if c.isdigit():
+                numbers.append(c)
+            if c == ',':
+                break
+            if c == '-':
+                numbers = [0]
+                break
+        
+        # when there are no numbers inside the string assuma value = 50
+        if numbers == []:
+            numbers = [5, 0]
+            value = int(''.join(map(str, numbers)))
+        else:
+            value = int(''.join(map(str, numbers)))
 
-def clean_stress_level(dataF):
-    field = 'What is your stress level (0-100)?'
-    # for i in data[field].size:
-    #     if data[field][i]
-    # dataF[field].clip(0, 100)
+        # if value is over 100, put value to 100
+        if value > 100:
+            value = 100
+        return value
 
+    # put each value in stress level data to 0-100
+    for value in stress_levels:
+        
+        # check if number is 'Nan'
+        if type(value) is float:
+            value = 100
+        # if number is in string extract stress level
+        elif type(value) is str:
+            value = clean_stress_levels(value)
 
 def clean_chocolate(dataF):
     field = 'Chocolate makes you.....'
@@ -200,3 +228,5 @@ def clean_experience_field(data, keys_old, keys):
     for k1, k2 in zip(keys_old, keys):
         data[data.str.contains(k1)] = k2
     return data
+
+
