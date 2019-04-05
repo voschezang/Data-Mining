@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import re
 from dateutil.parser import parse
 
@@ -121,6 +122,11 @@ def clean_birthdates(dataF):
 
     # rename columns
     bfn.columns = ['Day', 'Month', 'Year']
+    # rm unrealistic values
+    year = bfn['Year']
+    year[year < 1950] = np.nan
+    year[year > 2019 - 16] = np.nan
+    bfn['Year'] = year
     return bfn
 
 
@@ -129,14 +135,20 @@ def clean_nneigh(dataF):
     nneigh = dataF.iloc[:, [9]]
     nneighNum = nneigh.apply(pd.to_numeric, errors='coerce')
     checkNull = nneighNum.isna().T.squeeze()
+    # nneighNum = nneighNum.clip(0, lim)
     for i in range(nneighNum.size):
-        if (checkNull[i]):
+        if checkNull[i]:
             if (re.search(re.compile("[0-9]+"), nneigh.iloc[[i], [0]].squeeze()) != None):
                 nneighNum.iloc[[i], [0]] = re.search(re.compile(
                     "[0-9]+"), nneigh.iloc[[i], [0]].squeeze())[0]
             else:
                 nneighNum.iloc[[i], [0]] = nneighNum.median().squeeze()
-                print("sdf")
+                print("neigh: insert median")
+
+    # clip again
+    nneighNum = nneighNum.astype(float)
+    nneighNum[nneighNum > 200] = np.nan
+    # nneighNum = nneighNum.clip(0, lim)
     return nneighNum
 
 
@@ -148,6 +160,8 @@ def clean_money(dataF):
     moneyQa = moneyQa.str.replace("Barkie.*", "100")
     moneyQa = moneyQa.str.replace(".*[/]{1}.*", "0.21")
     nummoneyQa = moneyQa.apply(pd.to_numeric, errors='coerce')
+    nummoneyQa.loc[(~np.isfinite(nummoneyQa)) & nummoneyQa.notnull()] = np.nan
+    nummoneyQa[nummoneyQa > 100] = 100
     nummoneyQa[nummoneyQa.isna()] = nummoneyQa.median()
     return moneyQa, nummoneyQa
 
@@ -172,8 +186,7 @@ def clean_stress_level(stress_levels):
 
         # when there are no numbers inside the string assuma value = 50
         if numbers == []:
-            numbers = [5, 0]
-            value = int(''.join(map(str, numbers)))
+            value = np.nan
         else:
             value = int(''.join(map(str, numbers)))
 
@@ -186,12 +199,11 @@ def clean_stress_level(stress_levels):
     for i, value in enumerate(stress_levels):
 
         # check if number is 'Nan'
-        if type(value) is float:
-            stress_levels[i] = 100
         # else if number is in string extract stress level
-        elif type(value) is str:
+        if type(value) is str:
             stress_levels[i] = clean_stress_value(value)
 
+    stress_levels[stress_levels.isna()] = stress_levels.median()
     return stress_levels
 
 

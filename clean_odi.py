@@ -3,13 +3,14 @@
 Cleans ODI
 Nans in neighbours and money expected are replace by median, others left empty
 """
-
+import numpy as np
 import pandas as pd
 from odi import functions
 from util.bedtime import parse_bedtimes
 
 dataF = pd.read_csv('ODI-2019-csv.csv', sep=';')
 # dataF = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\ODI-2019-csv.csv', sep=';')
+# dataF.replace([np.inf, -np.inf], np.nan)
 moneyQa, nummoneyQa = functions.clean_money(dataF)
 
 
