@@ -137,7 +137,7 @@ def clean_nneigh(dataF):
             else:
                 nneighNum.iloc[[i], [0]] = nneighNum.median().squeeze()
                 print("sdf")
-    return nneigh
+    return nneighNum
 
 
 def clean_money(dataF):
