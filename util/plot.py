@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 # from mpl_toolkits.axes_grid1 import AxesGrid
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+# from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import rcParams
 import seaborn as sns
 import scipy
 import scipy.stats
+import itertools
 import util.data
 import numpy as np
 np.random.seed(123)
@@ -19,16 +20,19 @@ def savefig(fn, transparent=False,  bbox_inches='tight'):
     plt.savefig(fn, transparent=transparent, bbox_inches=bbox_inches)
 
 
-def correlation_grid(data, keys, conditional_x=False, numerical=True):
+def correlation_grid(data, keys, conditional_x=False, numerical=True,
+                     cmap='terrain'):
     rcParams['font.size'] = 14
     include_diagonal = numerical
 
     n_keys = len(keys)
-    if not include_diagonal:
+    if not include_diagonal and not conditional_x:
         n_keys -= 1
 
     with plt.style.context(('ggplot')):
-        figsize = (3 * n_keys, 2 * n_keys)
+        width = 3 if numerical else 2
+        figsize = (width * n_keys, 2 * n_keys)
+        figsize = (width * n_keys, 2 * n_keys)
         fig = plt.figure(figsize=figsize)
         # if not numerical:
         #     grid = AxesGrid(fig, 111,
@@ -43,63 +47,74 @@ def correlation_grid(data, keys, conditional_x=False, numerical=True):
         #                                   gridspec_kw={"height_ratios":
         #                                                [1, 0.05]})
         # n_keys, 0.1
-        cmap = 'terrain'
         # x
         for i_x, k_x in enumerate(keys):
             # y
             for i_y, k_y in enumerate(keys):
-                plot = False
-                if include_diagonal and i_x <= i_y:
-                    plot = True
+                if include_diagonal or conditional_x:
+                    assert not (not include_diagonal and not conditional_x)
                     ax = fig.add_subplot(
                         n_keys, n_keys, i_x + i_y * n_keys + 1)
-                elif not include_diagonal and i_x < i_y:
-                    plot = True
+                elif i_x < i_y:
+                    assert not include_diagonal and not conditional_x
                     ax = fig.add_subplot(
                         n_keys, n_keys, i_x + (i_y - 1) * n_keys + 1)
 
-                if plot:
-                    im = correlation_grid_cell(ax, data, i_x, k_x, i_y, k_y,
-                                               n_keys, conditional_x,
-                                               numerical, fig, cmap=cmap)
-                elif i_x == n_keys - 1 and i_y == 0:
-                    # add colorbar
-                    assert im is not None, 'iteraration direction is incorrect'
-                    width = 2
-                    i = i_x + i_y * n_keys + 1
-                    print(n_keys, i)
-                    ax = plt.subplot2grid(
-                        (n_keys, i), (0, n_keys - width), colspan=width)
-                    # ax = fig.add_subplot(
-                    #     n_keys, n_keys, i_x + i_y * n_keys + 1)
-                    colormap(cmap, ax)
-                    plt.title('Proportion')
-                    # plt.colorbar(im, cax=ax, use_gridspec=True,
-                    #              orientation='horizontal', pad=1)
+                if (include_diagonal and i_x <= i_y) \
+                        or (conditional_x and i_x != i_y) \
+                        or (not include_diagonal and not conditional_x
+                            and i_x < i_y):
+                    correlation_grid_cell(ax, data, i_x, k_x,
+                                          i_y, k_y, n_keys,
+                                          conditional_x,
+                                          numerical, fig,
+                                          cmap=cmap)
 
-        # cb()
-        # ax = grid[-1]
-        # cbar = ax.cax.colorbar(im)
-        # cbar = grid.cbar_axes[0].colorbar(im)
+                elif not conditional_x and not numerical and \
+                        i_x == n_keys - 1 and i_y == 0:
+                    correlation_grid_colorbar(n_keys, i_x, i_y, cmap)
+                elif include_diagonal or conditional_x:
+                    # hide background
+                    hide_ax(ax)
 
-        # plt.subplots_adjust(bottom=0.1, right=-1, top=0.1)
-        # cax = plt.axes([0.85, 0.1, 0.075, 0.8])
-        # plt.colorbar(im, cax=cax, orientation='horizontal', use_gridspec=True)
-        # plt.colorbar(im, use_gridspec=True)
+                # add y labels to left-most cells and x labels to bottom cells
+                if i_x == 0:
+                    plt.ylabel(k_y)
+                # if i_y == n_keys - 1:
+                if ((numerical or conditional_x) and i_y == n_keys - 1) \
+                        or (~numerical and i_y == n_keys):
+                    plt.xlabel(k_x)
 
-        # colorbar is not compatible with tight layout
+        # note that colorbar is not compatible with tight layout
         # https://matplotlib.org/users/tight_layout_guide.html
-
         plt.tight_layout()
+
+
+def correlation_grid_colorbar(n_keys, i_x, i_y, cmap):
+    # add colorbar
+    # assert im is not None, 'iteraration direction is incorrect'
+    # plt.colorbar(im, cax=ax, use_gridspec=True,
+    #              orientation='horizontal', pad=1)
+    # width = 2 if n_keys > 3 else 1
+    if n_keys > 4:
+        width = 3
+    elif n_keys > 3:
+        width = 2
+    else:
+        width = 1
+    i = i_x + i_y * n_keys + 1
+    ax = plt.subplot2grid(
+        (n_keys, i), (0, n_keys - width), colspan=width)
+    # ax = fig.add_subplot(
+    #     n_keys, n_keys, i_x + i_y * n_keys + 1)
+    n_xticks = 9 if n_keys > 4 else 5
+    colormap(cmap, ax, ratio=5 * width,  n_xticks=n_xticks)
+    plt.title('Proportion')
 
 
 def correlation_grid_cell(ax, data, i_x, k_x, i_y, k_y, n_keys,
                           conditional_x, numerical, fig, cmap):
     # include_diagonal = numerical
-    if i_x == 0:
-        plt.ylabel(k_y)
-    if i_y == n_keys:
-        plt.xlabel(k_x)
 
     if not numerical:
         # categories_x = data[k_x].unique()
@@ -107,7 +122,7 @@ def correlation_grid_cell(ax, data, i_x, k_x, i_y, k_y, n_keys,
         # summarize
         summary = util.data.summarize_categorical(
             data, k_x, k_y, conditional_x)
-        im = plot_summary(ax, summary, cmap)
+        im = plot_summary(ax, summary, cmap=cmap)
 
         # add colorbar below the grid
         # if i_x == n_keys - 1 and i_y == n_keys:
@@ -115,7 +130,7 @@ def correlation_grid_cell(ax, data, i_x, k_x, i_y, k_y, n_keys,
         # ax = fig.add_axes([0.2, -0.02, 0.75 * n_keys, 0.1 / n_keys])
         # cb = plt.colorbar(orientation='horizontal', pad=0.5)
         # plt.colorbar(orientation="horizontal",fraction=0.07,anchor=(1.0,0.0))
-        return im
+        return
 
     # else:
     x = getattr(data, k_x)
@@ -179,7 +194,12 @@ def regression(x, y, line=True, v=0):
 
 def plot_summary(ax, summary, show_grid=True, cmap='terrain'):
     x_labels = list(summary.keys())
-    y_labels = list(summary[x_labels[0]].keys())
+    # not all ylabels may be present in all x-items
+    # y_labels = list(summary[x_labels[0]].keys())
+    y_labels = [list(summary[x_labels[i]].keys())
+                for i in range(len(x_labels))]
+    y_labels = list(set(itertools.chain(*y_labels)))
+
     # TODO fix labels before plotting
     util.data.fix_labels(x_labels)
     util.data.fix_labels(y_labels)
@@ -212,13 +232,39 @@ def plot_summary(ax, summary, show_grid=True, cmap='terrain'):
     return img  # :: AxesImage
 
 
-def colormap(cmap_name: str, ax, ranges=[0, 1]):
+def colormap(cmap_name: str, ax, ranges=[0, 1], ratio=9, n_xticks=9):
+    """ Simulate a pyplot colorbar
+    """
     # orientation = 'horizontal'
     cmap = plt.cm.get_cmap(cmap_name)
-    ratio = 10
     ax.imshow([cmap(np.arange(cmap.N))], extent=[0, ratio, 0, 1])
     plt.yticks([])
-    n_xticks = 5
+    # n_xticks = 5
     plt.xticks(np.linspace(0, ratio, n_xticks),
                np.linspace(ranges[0], ranges[1], n_xticks))
-    plt.grid(False)
+
+    # minor grid
+    plt.grid(False, 'major')
+    # n_yticks = 17
+    # n_xtick_segments = n_xticks - 1  # + 2
+    n_inner_minor_xticks = (n_xticks - 1) * 1
+    n_inner_segments = n_inner_minor_xticks  # first and last half counted as one
+    segment_width = ratio / n_inner_segments
+    start_offset = segment_width / 2
+    minor_xticks = np.concatenate([
+        [0],
+        np.linspace(
+            start_offset, ratio - start_offset, n_inner_segments),
+        [ratio]])
+    ax.set_xticks(minor_xticks, minor=True)
+    ax.grid(which="minor", color='w', linestyle='-', linewidth=2.5)
+    # ax.set_xticks(minor_xticks, minor=True)
+    ax.tick_params(which="minor", bottom=False, left=False)
+    # plt.grid(True, 'minor', 'y', ls='--', lw=.5, c='black', alpha=1.)
+
+
+def hide_ax(ax):
+    ax.grid(False)
+    ax.patch.set_visible(False)
+    plt.xticks([])
+    plt.yticks([])
