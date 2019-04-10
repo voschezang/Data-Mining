@@ -7,6 +7,7 @@ import scipy
 import scipy.stats
 import itertools
 import util.data
+import util.string
 import numpy as np
 np.random.seed(123)
 
@@ -85,6 +86,7 @@ def correlation_grid(data, keys, conditional_x=False, numerical=True,
                         or (~numerical and i_y == n_keys):
                     plt.xlabel(k_x)
 
+        fig.align_labels()
         # note that colorbar is not compatible with tight layout
         # https://matplotlib.org/users/tight_layout_guide.html
         plt.tight_layout()
@@ -219,6 +221,7 @@ def plot_summary(ax, summary, show_grid=True, cmap='terrain'):
     else:
         rotation = 0
 #         plt.subplots_adjust(bottom=0.15)
+    x_labels = util.string.pad_labels(x_labels)
     plt.xticks(np.arange(n_x), x_labels, rotation=rotation)
     rotation = 0
     length = sum([len(label) for label in y_labels])
@@ -226,6 +229,7 @@ def plot_summary(ax, summary, show_grid=True, cmap='terrain'):
         rotation = 45
     else:
         rotation = 0
+    y_labels = util.string.pad_labels(y_labels)
     plt.yticks(np.arange(n_y), y_labels, rotation=rotation)
 #     plt.subplots_adjust(right=0.9)
     util.plot.show_grid(ax, im)

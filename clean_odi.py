@@ -3,7 +3,6 @@
 Cleans ODI
 Nans in neighbours and money expected are replace by median, others left empty
 """
-import numpy as np
 import pandas as pd
 from odi import functions
 from util.bedtime import parse_bedtimes

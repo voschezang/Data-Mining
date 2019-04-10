@@ -4,11 +4,15 @@ import numpy as np
 np.random.seed(123)
 
 
+def count_nans(data):
+    pass
+
+
 def summarize_categorical(data, k_x, k_y, conditional_x=False):
     # return the averages of each pair of categories
     # conditional_x means: P(Y|X=x) i.e. the distribution of Y given the value of X
     categories_x = data[k_x].unique()
-    categories_y = data[k_y].unique()
+    # categories_y = data[k_y].unique()
     # init dict
     summary = collections.defaultdict(dict)
     # fill dict
