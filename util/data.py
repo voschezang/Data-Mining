@@ -1,11 +1,23 @@
 
 import collections
 import numpy as np
+import pandas as pd
 np.random.seed(123)
 
 
 def count_nans(data):
     pass
+
+
+def select_most_common(data: pd.Series, n=9, key="Other"):
+    counts = collections.Counter(data)
+    most_common = dict(counts.most_common(n))
+    least_common = counts
+    for k in most_common.keys():
+        least_common.pop(k)
+
+    most_common[key] = sum(least_common.values())
+    return most_common
 
 
 def summarize_categorical(data, k_x, k_y, conditional_x=False):

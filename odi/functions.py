@@ -9,21 +9,23 @@ def clean_studies(dataF):
     studies = (dataF.ix[:, key]).str.upper()
     # various spellings of same study taken together
     studies[studies.str.contains("AI")] = "AI"
-    studies[studies.str.contains("COMPUTATIONAL SCIENCE")] = "CS"
-    studies[studies.str.contains("COMPUATIONAL SCIENCE")] = "CS"
-    # studies[studies.str.contains("COMPUTATIONAL SCIENCE")] = "CLS"
-    studies[studies.str.contains("COMPUTER SCIENCE")] = "CS"
-    studies[studies.str.contains("CLS")] = "CS"
-    studies[studies.str.contains("CS")] = "CS"
-    studies[studies.str.contains("INFORMATION SCIENCES")] = "CS"
-    studies[studies.str.contains("INFORMATION STUDIES")] = "CS"
-    studies[studies.str.contains("INFORMATION SYSTEMS")] = "CS"
-    studies[studies.str.contains("DATA SCIENCE")] = "CS"
-    studies[studies.str.contains("BIOINF")] = "BIOINFORMATICS"
-    studies[studies.str.contains("ECONOMETRICS")] = "ECONOMETRICS"
     studies[studies.str.contains("ARTIFICIAL INTELLIGENCE")] = "AI"
+    studies[studies.str.contains("COMPUTATIONAL")] = "CLS"
+    studies[studies.str.contains("COMPUTATIONAL SCIENCE")] = "CLS"
+    studies[studies.str.contains("COMPUTATIONAL SCIENCE")] = "CLS"
+    studies[studies.str.contains("CLS")] = "CLS"
+    cs = "CS"
+    studies[studies.str.contains("COMPUTER SCIENCE")] = cs
+    studies[studies.str.contains("CS")] = cs
+    studies[studies.str.contains("INFORMATION SCIENCES")] = "IS"
+    studies[studies.str.contains("INFORMATION STUDIES")] = "IS"
+    studies[studies.str.contains("INFORMATION SYSTEMS")] = "IS"
+    studies[studies.str.contains("DATA SCIENCE")] = "IS"
+    studies[studies.str.contains("BIOINF")] = "BIO"
+    studies[studies.str.contains("BIOSB")] = "BIO"
     studies[studies.str.contains("BUSINESS ADMINISTRATION")] = "BA"
     studies[studies.str.contains("BUSINESS ANALYTICS")] = "BA"
+    studies[studies.str.contains("BA")] = "BA"
     studies[studies.str.contains("DIGITAL BUSINESS")] = "DBI"
     studies[studies.str.contains("INNOVATION")] = "DBI"
     studies[studies.str.contains("DBI")] = "DBI"
@@ -31,8 +33,9 @@ def clean_studies(dataF):
     studies[studies.str.contains("QRM")] = "QRM"
     studies[studies.str.contains("FINANCIAL")] = "QRM"
     studies[studies.str.contains("FINANCE")] = "QRM"
-    studies[studies.str.contains("ECONOMETRICS")] = "QRM"
-    studies[studies.str.contains("ECONOMETRIVS")] = "QRM"
+    studies[studies.str.contains("ECONOMETRICS")] = "Econometrics"
+    studies[studies.str.contains("ECONOMETRICS")] = "Econometrics"
+    studies[studies.str.contains("ECONOMETRIVS")] = "Econometrics"
     return studies
 
 
