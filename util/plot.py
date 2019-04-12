@@ -63,8 +63,8 @@ def correlation_grid(data, keys, conditional_x=False, numerical=True,
 
                 if (include_diagonal and i_x <= i_y) \
                         or (conditional_x and i_x != i_y) \
-                        or (not include_diagonal and not conditional_x
-                            and i_x < i_y):
+                        or (not include_diagonal and not conditional_x and
+                            i_x < i_y):
                     correlation_grid_cell(ax, data, i_x, k_x,
                                           i_y, k_y, n_keys,
                                           conditional_x,
@@ -234,6 +234,25 @@ def plot_summary(ax, summary, show_grid=True, cmap='terrain'):
 #     plt.subplots_adjust(right=0.9)
     util.plot.show_grid(ax, im)
     return img  # :: AxesImage
+
+
+def categorical_distribution(data: dict, fig=None, xlabel='', sort=True,
+                             label_func=lambda x: x):
+    # barplot
+    if fig is None:
+        fig = plt.figure()
+    if sort:
+        items = sorted(data.items(), key=lambda x: x[0])
+    else:
+        items = data.items()
+    keys, values = zip(*items)
+    values = np.array(values) / sum(values)
+    keys = list(data.keys())
+    keys = [label_func(k) for k in keys]
+    keys = util.string.pad_labels(keys)
+    plt.bar(range(len(keys)), values, tick_label=keys)
+    plt.xlabel(xlabel)
+    return fig
 
 
 def colormap(cmap_name: str, ax, ranges=[0, 1], ratio=9, n_xticks=9):
