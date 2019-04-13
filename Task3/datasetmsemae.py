@@ -21,9 +21,22 @@ boston = load_boston()
 print(boston.data.shape)
 
 regressor = DecisionTreeRegressor(random_state=0, criterion='mse')
-cvs = cross_val_score(regressor, boston.data, boston.target, cv=5)
-print(cvs)
+scores = cross_val_score(regressor, boston.data, boston.target, cv=10)
+print(scores)
+print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
 regressor = DecisionTreeRegressor(random_state=0, criterion='mae')
-cvs = cross_val_score(regressor, boston.data, boston.target, cv=)
-print(cvs)
+scores2 = cross_val_score(regressor, boston.data, boston.target, cv=10)
+print(scores2)
+print("Accuracy: %0.2f (+/- %0.2f)" % (scores2.mean(), scores2.std() * 2))
+
+
+from sklearn.datasets import load_boston
+from sklearn.linear_model import RidgeCV
+from sklearn.cross_validation import cross_val_score
+
+boston = load_boston()
+# ridgeCV 
+mean = np.mean(cross_val_score(RidgeCV(), boston.data, boston.target, scoring='mean_squared_error'))
+mean2 = np.mean(cross_val_score(RidgeCV(), boston.data, boston.target, scoring='mean_absolute_error'))
+print(mean, mean2)
