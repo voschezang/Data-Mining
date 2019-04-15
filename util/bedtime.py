@@ -25,7 +25,9 @@ def parse_bedtime(field=''):
     # parse all times to time format HH:MM:SS
     time = parse_bedtime_helper(field)
     if time is not None:
-        return parse(time, fuzzy=True).time()
+        hour = parse(time, fuzzy=True).time().strftime('%H')
+        min_hour = 17  # 17:00
+        return (int(hour) - min_hour) % 24
     return None
 
 

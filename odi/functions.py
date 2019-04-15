@@ -146,7 +146,7 @@ def clean_birthdates(dataF):
     bfn.columns = ['Day', 'Month', 'Year']
     # rm unrealistic values
     year = bfn['Year']
-    year[year < 1950] = np.nan
+    year[year < 1970] = np.nan
     year[year > 2019 - 16] = np.nan
     bfn['Year'] = year
     return bfn
@@ -170,6 +170,7 @@ def clean_nneigh(dataF):
     # clip again
     nneighNum = nneighNum.astype(float)
     nneighNum[nneighNum > 200] = np.nan
+    # nneighNum[nneighNum > 50] = 50
     # nneighNum = nneighNum.clip(0, lim)
     return nneighNum
 

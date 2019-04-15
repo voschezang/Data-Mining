@@ -80,10 +80,14 @@ def correlation_grid(data, keys, conditional_x=False, numerical=True,
 
                 # add y labels to left-most cells and x labels to bottom cells
                 if i_x == 0:
+                    if k_y == 'Money':
+                        k_y += ' (€)'
                     plt.ylabel(k_y)
                 # if i_y == n_keys - 1:
                 if ((numerical or conditional_x) and i_y == n_keys - 1) \
                         or (~numerical and i_y == n_keys):
+                    if k_x == 'Money':
+                        k_x += ' (€)'
                     plt.xlabel(k_x)
 
         fig.align_labels()
@@ -124,7 +128,7 @@ def correlation_grid_cell(ax, data, i_x, k_x, i_y, k_y, n_keys,
         # summarize
         summary = util.data.summarize_categorical(
             data, k_x, k_y, conditional_x)
-        im = plot_summary(ax, summary, cmap=cmap)
+        plot_summary(ax, summary, cmap=cmap)
 
         # add colorbar below the grid
         # if i_x == n_keys - 1 and i_y == n_keys:
@@ -140,23 +144,32 @@ def correlation_grid_cell(ax, data, i_x, k_x, i_y, k_y, n_keys,
     x = util.data.to_floats(x)
     y = util.data.to_floats(y)
     x, y = util.data.filter_nans(x, y)
+    if k_x == 'Year':
+        a = min(x) - 4
+        b = 2019 - 16
+        plt.xlim(a, b)
+        plt.xticks(np.linspace(a, b, 4).astype(int))
+    if k_x in ['Money', 'Stress level']:
+        plt.xlim(0, 100)
+
     if k_x == k_y:
         # plot hist + kde curve (approximated distribution)
         sns.distplot(x, hist=True, kde=True, color='darkgreen')
-    else:
-        plt.scatter(x, y, s=9, alpha=0.8)
-        # compute correlation (symmetric for x,y)
+        return
+
+    plt.scatter(x, y, s=9, alpha=0.8)
+    # compute correlation (symmetric for x,y)
 #             x = np.array(x)[~np.isnan(x)]
 #             y = np.array(y)[~np.isnan(y)][:x.size]
-        r, p = scipy.stats.pearsonr(x, y)
-        significant = 'significant' if p < 0.05 else 'not significant'
-        print('%s ~ %s: \t %s \t p-value: %0.4f, c: %0.4f' %
-              (k_x, k_y, significant, p, r))
+    r, p = scipy.stats.pearsonr(x, y)
+    significant = 'significant' if p < 0.05 else 'not significant'
+    print('%s ~ %s: \t %s \t p-value: %0.4f, c: %0.4f' %
+          (k_x, k_y, significant, p, r))
 
-        # fit regression line (asymmetric for x,y)
-        xy_pred, _result = regression(x, y, line=True, v=0)
-        plt.plot(xy_pred[:, 0], xy_pred[:, 1],
-                 color='black', lw=1, alpha=0.9)
+    # fit regression line (asymmetric for x,y)
+    xy_pred, _result = regression(x, y, line=True, v=0)
+    plt.plot(xy_pred[:, 0], xy_pred[:, 1],
+             color='black', lw=1, alpha=0.9)
 
 
 def show_grid(ax, X):
