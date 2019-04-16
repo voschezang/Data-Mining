@@ -13,22 +13,25 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import load_boston
 from sklearn.linear_model import LinearRegression
 import sklearn
+from sklearn import svm
 from sklearn.tree import DecisionTreeRegressor
-
-from sklearn.metrics import make_scorer
-from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
 
 boston = load_boston()
 pd_bos = pd.DataFrame(boston.data)
-print(boston.feature_names)
+# print(boston.feature_names)
 pd_bos.columns = boston.feature_names
 pd_bos['PRICE'] = boston.target
 X = pd_bos.drop('PRICE', axis=1)
 y = pd_bos.PRICE
 
 X_train, X_test, Y_train, Y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.25, random_state=5)
-X2 = pd_bos[['CRIM', 'ZN']].copy()
+X2 = pd_bos[['RM', 'LSTAT']].copy()
 X2_train, X2_test, Y2_train, Y2_test = sklearn.model_selection.train_test_split(X2, y, test_size=0.25, random_state=5)
+
+# method 1 & method 2
 
 regr_1 = DecisionTreeRegressor(criterion='mse')
 regr_2 = DecisionTreeRegressor(criterion='mae')
@@ -43,51 +46,64 @@ y_model2_predict = model2.predict(X_test)
 # R^2 score function
 score1 = model1.score(X_test, Y_test)
 score2 = model2.score(X_test, Y_test)
-print(score1, score2)
-
-model3 = regr_1.fit(X2_train, Y2_train)
-model4 = regr_2.fit(X2_train, Y2_train)
-
-y_model3_predict = model3.predict(X2_test)
-y_model4_predict = model4.predict(X2_test)
 
 def plot_residual(x_val, y_val, color):
 	plt.figure()
 	plt.scatter(x_val, y_val, c=color, s=40, alpha=0.5)
-	line = np.linspace(0, 75, 100)
-	plt.plot(line, line)
+	plt.hlines(y=0, xmin=0, xmax=55, linestyles='dashed')
 	plt.ylabel("Output")
 	plt.xlabel("Input")
 	plt.show()
 
-# plot_residual(y_model1_predict,  Y_test, 'b')
-# plot_residual(y_model2_predict,  Y_test, 'r')
-# plot_residual(y_model3_predict,  Y_test, 'g')
-# plot_residual(y_model4_predict,  Y_test, 'y')
+# plot_residual(y_model1_predict,  Y_test-y_model1_predict, 'b')
+# plot_residual(y_model2_predict,  Y_test-y_model2_predict, 'r')
 
-# plt.figure()
-# plt.scatter(np.linspace(0,70,len(y_model3_predict)), y_model3_predict)
-# plt.xlabel("linspace")
-# plt.ylabel("predicted price")
-# plt.show()
+tree_MSE = mean_squared_error(y_model1_predict, Y_test)
+tree_MSE2 = mean_squared_error(y_model1_predict, Y_test)
 
-# plt.figure()
-# plt.scatter(X2_test['CRIM'], y_model3_predict)
-# plt.xlabel("Crimerate")
-# plt.ylabel("predicted price")
-# plt.show()
+tree_MAE = mean_absolute_error(y_model2_predict, Y_test)
+tree_MAE2 = mean_absolute_error(y_model2_predict, Y_test)
 
-# residuals plot shows true y-value on x-axis, predicted value on y-axis 
-# plt.figure()
-# plt.scatter(y_model1_predict,  Y_test, c='b', s=40, alpha=0.5)
-# plt.plot(line, line)
-# plt.ylabel("Output")
-# plt.xlabel("Input")
-# plt.show()
+# method 3
 
-# plt.figure()
-# plt.scatter(y_model2_predict,  Y_test, c='r', s=40, alpha=0.5)
-# plt.plot(line, line)
-# plt.ylabel("Output")
-# plt.xlabel("Input")
-# plt.show()
+# try different regression methods on data set
+lin_model = LinearRegression()
+lin_model.fit(X_train, Y_train)
+
+# model evaluation
+Y_lin_model = lin_model.predict(X_test)
+linmodel_MSE = mean_squared_error(Y_test, Y_lin_model)
+linmodel_MAE = mean_absolute_error(Y_test, Y_lin_model)
+
+# method 4 https://blog.goodaudience.com/linear-regression-on-the-boston-housing-data-set-d18c4ce4d0be
+def normal_equation(x, y):
+	'''
+	Normal equation will calculate correct weights of features.
+	'''
+	return np.matmul(np.matmul(np.linalg.inv(np.matmul(x.T, x)), x.T), y)
+
+theta = normal_equation(X_train, Y_train)
+predictions = np.dot(X_train, theta)
+test_pred = np.dot(X_test, theta)
+MSE3 = mean_squared_error(test_pred, Y_test)
+MAE3 = mean_absolute_error(test_pred, Y_test)
+
+# method 5 Support Vector Machine
+clf = svm.SVR()
+clf.fit(X_train, Y_train) 
+Y_SVR = clf.predict(X_test)
+
+MSE_SVR = mean_squared_error(Y_SVR, Y_test)
+MAE_SVR = mean_absolute_error(Y_SVR, Y_test)
+
+print("DecisionTreeRegressor with MSE & MAE criterion")
+print(tree_MSE, tree_MAE)
+
+print("Linear Regression with scikit function")
+print(linmodel_MSE, linmodel_MAE)
+
+print("manual Linear Regression")
+print(MSE3, MAE3)
+
+print("support vector regression")
+print(MSE_SVR, MAE_SVR)
