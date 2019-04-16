@@ -22,9 +22,7 @@ functions.clean_experience(dataF)
 functions.clean_chocolate(dataF)
 
 # create df with new data
-studyV = functions.clean_studies(dataF)
 birthMat = functions.clean_birthdates(dataF)
-neighbourV = functions.clean_nneigh(dataF)
 moneyV = moneyQa  # TODO unused?
 
 dataNew = dataF
@@ -33,9 +31,9 @@ dataNew = dataNew.drop(["What programme are you in?",
                         "When is your birthday (date)?",
                         "Number of neighbors sitting around you?",
                         "Time you went to be Yesterday"], axis=1)
-dataNew["Programme"] = studyV
+dataNew["Programme"] = functions.clean_studies(dataF)
 dataNew = dataNew.join(birthMat)
-dataNew["Neighbours"] = neighbourV
+dataNew["Neighbours"] = functions.clean_nneigh(dataF)
 dataNew["Money"] = nummoneyQa
 dataNew["Bedtime"] = parse_bedtimes(dataF['Time you went to be Yesterday'])
 
