@@ -4,16 +4,12 @@ Created on Thu Apr  4 11:16:42 2019
 
 @author: Gillis
 """
-import csv
 import pandas as pd
-import re
-from dateutil.parser import parse
 import numpy as np
 import sklearn.model_selection as ms
 import sklearn.ensemble as es
 from sklearn import svm
 import matplotlib.pyplot as plt
-import sklearn.preprocessing as pp
 from sklearn import linear_model
 from matplotlib import rcParams
 from sklearn.neural_network import MLPClassifier
@@ -21,8 +17,7 @@ rcParams['font.family'] = 'serif'
 rcParams['font.size'] = 14
 
 #Read in data, and prepare
-#dataF = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\titanic\\train.csv', sep=',')
-dataF = pd.read_csv('train.csv')
+#dataF = pd.read_csv('train.csv')
 dataF = dataF.drop('Name',axis=1)
 dataF["isMale"] = dataF["Sex"] == "male"
 dataF = dataF.drop('Sex', axis=1)
@@ -83,7 +78,7 @@ corrs = dataF.corr()
 dataF = dataF.drop(["Parch","SibSp"],axis=1)
 
 #Select variables
-dataF = dataF.drop(["A","F","Age","isQ"], axis=1)
+#dataF = dataF.drop(["A","F","Age","isQ"], axis=1)
 #sdataa = dataF
 #dataF=sdataa
 #dataF = dataF[["Survived","isMale","highClass","lowPrice","isS","B","highPrice","lowClass"]]
@@ -99,7 +94,7 @@ fullTrainX = dataF.loc[:,"Age":]
 fullTrainY = dataF["Survived"]
 
 #fit and train 3 models, select best
-gbc_tuned_parameters = [{'loss':['deviance','exponential'],'learning_rate':[0.1,0.01,0.2],'n_estimators':[50,75,100,150,200],'max_depth':[1, 2, 3, 4],'min_samples_split' :[2,4]}]
+gbc_tuned_parameters = [{'loss':['deviance','exponential'],'learning_rate':[0.1,0.01,0.2],'n_estimators':[50,100,150,200],'max_depth':[1, 2, 3, 4],'min_samples_split' :[2,4]}]
 gbc = ms.GridSearchCV(es.GradientBoostingClassifier(),gbc_tuned_parameters,cv=5,scoring='accuracy')
 gbcScore = ms.cross_val_score(gbc, trainX, trainY, scoring='accuracy', cv=5)
 print(np.mean(gbcScore))
@@ -107,14 +102,6 @@ gbc.fit(trainX,trainY)
 print(gbc.score(testX,testY))
 print(gbc.best_params_)
 print(gbc.best_score_)
-
-gbcModel = es.GradientBoostingClassifier(learning_rate = 0.2, loss='exponential',max_depth=3, min_samples_split=4, n_estimators=100)
-gbcModel.fit(trainX,trainY)
-print(gbcModel.score(testX,testY))
-print(gbc.feature_importances_)
-
-gbcModel.fit(trainX,trainY)
-print(gbcModel.score(testX,testY))
 
 tuned_parameters = [{'C':[0.01,0.1,1,10],'kernel':['linear','rbf'], 'gamma':['auto','scale']}]
 svmModel = ms.GridSearchCV(svm.SVC(),tuned_parameters, scoring= 'accuracy', cv=5)
@@ -132,7 +119,7 @@ print(np.mean(rfScore))
 rfModel.fit(trainX,trainY)
 print(rfModel.score(testX,testY))
 
-tuned_parameters = [{'hidden_layer_sizes':[(5,2),(5),(10,2),(10,5),(4,2),(4,4),(5,5),np.arange(4,12)]}]
+tuned_parameters = [{'hidden_layer_sizes':[(5,2),(10,2),(10,5),(4,2),(5,5),np.arange(4,12)]}]
 nnetModel = ms.GridSearchCV(MLPClassifier(max_iter=1000,solver='lbfgs'),tuned_parameters,cv=5,scoring='accuracy')
 nnetScore = ms.cross_val_score(nnetModel, trainX, trainY, scoring='accuracy',cv=5)
 print(np.mean(nnetScore))
@@ -203,5 +190,4 @@ predicts = bestModel.predict(dataT.loc[:,"Age":])
 finalDF = pd.DataFrame()
 finalDF["PassengerId"] = dataT["PassengerId"]
 finalDF["Survived"] = predicts
-#finalDF.to_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\titanic\\titanicpredictions.csv', sep=',',index=False)
 finalDF.to_csv('titanicpredictions.csv',sep=',',index=False)
