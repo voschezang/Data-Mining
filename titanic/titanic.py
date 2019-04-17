@@ -17,7 +17,7 @@ rcParams['font.family'] = 'serif'
 rcParams['font.size'] = 14
 
 #Read in data, and prepare
-#dataF = pd.read_csv('train.csv')
+dataF = pd.read_csv('train.csv')
 dataF = dataF.drop('Name',axis=1)
 dataF["isMale"] = dataF["Sex"] == "male"
 dataF = dataF.drop('Sex', axis=1)
@@ -131,7 +131,8 @@ print(nnetModel.score(testX,testY))
 bestModel = rfModel
 bestModel.fit(fullTrainX,fullTrainY)
 #Redo data transformations for test set
-dataT = pd.read_csv('C:\\Users\\Gillis\\Documents\\Uni\\Master2\\DMT\\Data-Mining\\titanic\\test.csv', sep=',')
+dataT = pd.read_csv('test.csv', sep=',')
+
 dataT = dataT.drop('Name',axis=1)
 dataT["isMale"] = dataT["Sex"] == "male"
 dataT = dataT.drop('Sex', axis=1)
