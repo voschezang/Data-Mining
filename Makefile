@@ -1,5 +1,5 @@
 default:
 	jupyter notebook
 
-clean-odi:
-	python3 clean_odi.py
+clean:
+	python3 clean_data.py

@@ -1,15 +1,79 @@
 
+from sklearn import preprocessing
 import collections
 import numpy as np
 import pandas as pd
 np.random.seed(123)
 
 
-def count_nans(data):
-    pass
+def count_nans(data, k):
+    return data[k].isnull().sum()
 
 
-def select_most_common(data: pd.Series, n=9, key="Other"):
+def replace_missing(data, k):
+    row = data[k]
+    n = count_nans(data, k)
+    if n > 0:
+        print('\tReplace %i null values' % n)
+    # note that pd.where different than np.where
+#     avg = np.nanmedian([x for x in X])
+#     row = np.where(row.isnan(), row.median(), row)
+    row.where(~row.isnull(), row.median(), inplace=True)
+    # return row
+
+
+def clean_id(data, k):
+    print('\nclean id in `%s`' % k)
+    assert data[k].isnull().sum() == 0, 'Missing values shoud be removed'
+    row = data[k].copy()
+    n = data[k].unique().size
+    n_max = 10
+    if n > n_max - 1 or True:
+        print('\tCombine values')
+        if row.dtype == 'int64':
+            other = max(data[k].unique()) + 1
+            if other < 1e16:
+                other = 1e16
+        else:
+            other = 'Other'
+        most_common = select_most_common(row, n=n_max, key=other)
+        keys = most_common.keys()
+        row.where(row.isin(keys), other, inplace=True)
+    # return row
+
+
+def discretize(data, k, E, n_bins=None):
+    """
+    :E Encoder object with attributes `encoders`, `decoders`
+    """
+    print('dicretize `%s`' % k)
+    if n_bins is None:
+        n_bins = data[k].unique().size
+    X = data[k]
+    X = np.array([x for x in X]).reshape(-1, 1)
+    bins = np.repeat(n_bins, X.shape[1])  # e.g. [5,3] for 2 features
+    # encode to integers
+    # quantile: each bin contains approx. the same number of features
+    est = preprocessing.KBinsDiscretizer(
+        n_bins=bins, encode='ordinal', strategy='quantile')
+    est.fit(X)
+#     data[k + ' bin'] = est.transform(X)
+#     data.drop(k)
+    data[k] = est.transform(X)
+    E.discretizers[k] = est
+    s = ''
+    print('\tbins (%i):' % n_bins)
+    for st in [round(a, 3) for a in est.bin_edges_[0]]:
+        #         if k == 'Year':
+        #             st = int(round(st))
+        s += str(st) + ', '
+    print('\t\t\\textit{%s}: $\\{%s\\}$\n' % (k, s[:-2]))
+
+
+def select_most_common(data: pd.Series, n=9, key="Other") -> dict:
+    """ Return a dict containing the `n` most common keys and their count.
+    :key the name of the new attribute that will replace the minority attributes
+    """
     counts = collections.Counter(data)
     most_common = dict(counts.most_common(n))
     least_common = counts
