@@ -3,7 +3,7 @@ import util.plot
 # import pickle
 # import copy
 # import scipy.stats
-import collections
+# import collections
 # import seaborn as sns
 from matplotlib import rcParams
 # from matplotlib.ticker import NullFormatter
@@ -28,16 +28,14 @@ categorical = []
 class Encoders:
     discretizers = {}
     encoders = {}
-# E = Encoders()
-# E.discretizers = {}
-# E.encoders = {}
 
 
-k = 'visitor_location_country_id'
-util.data.replace_missing(data_clean, k)
-util.data.clean_id(data_clean, k)
-util.data.discretize(data_clean, k, Encoders)
-categorical.append(k)
+ids = [k for k in data.columns if 'id' in k]
+for k in ids:
+    util.data.replace_missing(data_clean, k)
+    util.data.clean_id(data_clean, k)
+    util.data.discretize(data_clean, k, Encoders)
+    categorical.append(k)
 
 
 print('\n--------')

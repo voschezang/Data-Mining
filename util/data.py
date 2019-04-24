@@ -14,21 +14,23 @@ def replace_missing(data, k):
     row = data[k]
     n = count_nans(data, k)
     if n > 0:
-        print('\tReplace %i null values' % n)
+        n_rel = n / data.shape[0] * 100
+        print('\tReplace %i null values (%0.2f\%)' % (n, n_rel))
     # note that pd.where different than np.where
 #     avg = np.nanmedian([x for x in X])
 #     row = np.where(row.isnan(), row.median(), row)
     row.where(~row.isnull(), row.median(), inplace=True)
-    # return row
 
 
 def clean_id(data, k):
+    """ Clean numerical field `k` that represents an idea
+    """
     print('\nclean id in `%s`' % k)
     assert data[k].isnull().sum() == 0, 'Missing values shoud be removed'
-    row = data[k].copy()
+    row = data[k]
     n = data[k].unique().size
-    n_max = 10
-    if n > n_max - 1 or True:
+    n_max = 9
+    if n > n_max:
         print('\tCombine values')
         if row.dtype == 'int64':
             other = max(data[k].unique()) + 1
@@ -36,14 +38,15 @@ def clean_id(data, k):
                 other = 1e16
         else:
             other = 'Other'
-        most_common = select_most_common(row, n=n_max, key=other)
+        most_common = select_most_common(row, n=n_max - 1, key=other)
         keys = most_common.keys()
         row.where(row.isin(keys), other, inplace=True)
-    # return row
 
 
 def discretize(data, k, E, n_bins=None):
-    """
+    """ Encode data[k] to a numerical format (in range [0,n_bins])
+    Use stragegy=`uniform` when encoding integers (e.g. id's)
+
     :E Encoder object with attributes `encoders`, `decoders`
     """
     print('dicretize `%s`' % k)
@@ -54,20 +57,26 @@ def discretize(data, k, E, n_bins=None):
     bins = np.repeat(n_bins, X.shape[1])  # e.g. [5,3] for 2 features
     # encode to integers
     # quantile: each bin contains approx. the same number of features
+    strategy = 'uniform' if data[k].dtype == 'int64' else 'quantile'
     est = preprocessing.KBinsDiscretizer(
-        n_bins=bins, encode='ordinal', strategy='quantile')
+        n_bins=bins, encode='ordinal', strategy=strategy)
     est.fit(X)
+    n_bins = est.bin_edges_[0].size
+    s = ''
+    if data[k].dtype == 'int64':
+        print('\tAttribute & Number of bins (categories)')
+        print('\t%s & %i \\\\' % (strategy, n_bins))
+    else:
+        print('\tbins (%i, %s):' % (n_bins, strategy))
+        print('\tAttribute & Bin start & Bin 1 & Bin 2 \\\\')
+        for st in [round(a, 3) for a in est.bin_edges_[0]]:
+            s += '$%s$ & ' % str(st)
+        print('\t\t%s & %s\n' % (k, s[:-2]))
+
 #     data[k + ' bin'] = est.transform(X)
 #     data.drop(k)
     data[k] = est.transform(X)
     E.discretizers[k] = est
-    s = ''
-    print('\tbins (%i):' % n_bins)
-    for st in [round(a, 3) for a in est.bin_edges_[0]]:
-        #         if k == 'Year':
-        #             st = int(round(st))
-        s += str(st) + ', '
-    print('\t\t\\textit{%s}: $\\{%s\\}$\n' % (k, s[:-2]))
 
 
 def select_most_common(data: pd.Series, n=9, key="Other") -> dict:
