@@ -44,6 +44,13 @@ for k in star_ratings:
     util.data.clean_star_rating(data_clean, k)
     categorical.append(k)
 
+columns = [k for k in columns if k not in star_ratings]
+# k = 'visitor_hist_adr_usd'
+usds = [k for k in columns if 'usd' in k]
+for k in usds:
+    util.data.clean_usd(data, k)
+
+print(len(columns), 'remaining')
 
 data_clean.to_csv('data/training_set_VU_DM_clean.csv', sep=';')
 print('\n--------')

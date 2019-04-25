@@ -37,6 +37,15 @@ def normalize(data, k, strict=False):
         data[k] = (x - x.mean()) / x.std()
 
 
+def log_normalize(data, k):
+    print('\tlog-normalize row')
+    x = data[k]
+    # data[k] = np.log10(x)
+    if np.any(x < 0):
+        print_warning('\tSigned log')
+    data[k] = np.sign(x) * np.log10(x.abs() + 1e-9)
+
+
 def replace_missing(data, k):
     row = data[k]
     n = count_null_values(data, k)
@@ -87,6 +96,12 @@ def clean_star_rating(data, k):
 
     normalize(data, k)
     replace_missing(data, k)
+
+
+def clean_usd(data, k):
+    print_primary('\nclean usd: `%s`' % k)
+    log_normalize(data, k)
+    normalize(data, k)
 
 
 def discretize(data, k, E, n_bins=None):
