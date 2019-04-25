@@ -1,28 +1,27 @@
-import util.data
+import pandas as pd
+from matplotlib import rcParams
+import pickle
 import util.plot
-# import pickle
+import util.data
+import numpy as np
+np.random.seed(123)
+
+
 # import copy
 # import scipy.stats
 # import collections
 # import seaborn as sns
-from matplotlib import rcParams
 # from matplotlib.ticker import NullFormatter
 # import matplotlib.pyplot as plt
-# import sklearn
-import pandas as pd
-# from dateutil.parser import parse
-import numpy as np
-np.random.seed(123)
 rcParams['font.family'] = 'serif'
 rcParams['font.size'] = 14
 # rcParams['text.usetex'] = True
-
-
+# import sklearn
+# from dateutil.parser import parse
 # data = pd.read_csv('data/training_set_VU_DM.csv', sep=';')
+
 data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1000)
 # data.columns.sort_values()
-data_clean = data
-categorical = []
 
 
 class Encoders:
@@ -30,28 +29,81 @@ class Encoders:
     encoders = {}
 
 
-columns = data.columns
-ids = [k for k in columns if 'id' in k]
-for k in ids:
-    util.data.replace_missing(data_clean, k)
-    util.data.clean_id(data_clean, k)
-    util.data.discretize(data_clean, k, Encoders)
-    categorical.append(k)
+columns = list(data.columns)
+# id
+keys = [k for k in columns if 'id' in k]
+for k in keys:
+    util.data.replace_missing(data, k)
+    util.data.clean_id(data, k)
+    util.data.discretize(data, k, Encoders)
+util.string.remove(columns, keys)
 
-columns = [k for k in columns if k not in ids]
-star_ratings = [k for k in columns if 'starrating' in k]
-for k in star_ratings:
-    util.data.clean_star_rating(data_clean, k)
-    categorical.append(k)
+# star ratings
+keys = [k for k in columns if 'starrating' in k]
+for k in keys:
+    util.data.clean_star_rating(data, k)
+util.string.remove(columns, keys)
 
-columns = [k for k in columns if k not in star_ratings]
-# k = 'visitor_hist_adr_usd'
-usds = [k for k in columns if 'usd' in k]
-for k in usds:
+# usd
+keys = [k for k in columns if 'usd' in k]
+for k in keys:
     util.data.clean_usd(data, k)
+util.string.remove(columns, keys)
 
-print(len(columns), 'remaining')
+# float
+keys = [k for k in columns if 'score' in k]
+for k in keys:
+    util.data.clean_float(data, k)
+util.string.remove(columns, keys)
 
-data_clean.to_csv('data/training_set_VU_DM_clean.csv', sep=';')
+# categorical ints
+keys = util.string.select_if_contains(
+    columns, ['count', 'position', 'srch_length_of_stay', 'srch_booking_window'])
+for k in keys:
+    util.data.clean_int(data, k, Encoders)
+util.string.remove(columns, keys)
+
+# flag
+keys = [k for k in columns if 'flag' in k]
+for k in keys:
+    util.data.print_primary(k)
+    util.data.replace_missing(data, k)
+util.string.remove(columns, keys)
+
+# boolean
+keys = [k for k in columns if 'bool' in k]
+for k in keys:
+    # TODO
+    pass
+util.string.remove(columns, keys)
+
+# comp
+keys = [k for k in columns if 'comp' in k]
+for k in keys:
+    # TODO
+    pass
+util.string.remove(columns, keys)
+
+
+# date_time
+# TODO
+k = 'date_time'
+columns.remove(k)
+
+# prop_log_historical_price
+k = 'prop_log_historical_price'
+util.data.replace_missing(data, k, 0)
+util.data.discretize(data, k, Encoders, n_bins=3)
+columns.remove(k)
+
+print(len(columns), 'remaining attrs')
+print(columns)
+
+# save data & encoders
+data.to_csv('data/training_set_VU_DM_clean.csv', sep=';')
+fn = 'encoder.pkl'
+with open(fn, 'wb') as f:
+    pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+
 print('\n--------')
 print('Done')

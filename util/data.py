@@ -46,7 +46,7 @@ def log_normalize(data, k):
     data[k] = np.sign(x) * np.log10(x.abs() + 1e-9)
 
 
-def replace_missing(data, k):
+def replace_missing(data, k, value=None):
     row = data[k]
     n = count_null_values(data, k)
     if n > 0:
@@ -56,7 +56,9 @@ def replace_missing(data, k):
 #     avg = np.nanmedian([x for x in X])
 #     row = np.where(row.isnan(), row.median(), row)
     # row.where(row.notna(), row.median(), inplace=True)
-    row.fillna(row.median(), inplace=True)
+    if value is None:
+        value = row.median()
+    row.fillna(value, inplace=True)
 
 
 def clean_id(data, k):
@@ -66,9 +68,8 @@ def clean_id(data, k):
     assert data[k].isnull().sum() == 0, 'Missing values shoud be removed'
     row = data[k]
     n = data[k].unique().size
-    n_max = 9
+    n_max = 9  # TODO use larger number
     if n > n_max:
-        print('\tCombine values')
         if row.dtype == 'int64':
             other = max(data[k].unique()) + 1
             if other < 1e16:
@@ -100,8 +101,26 @@ def clean_star_rating(data, k):
 
 def clean_usd(data, k):
     print_primary('\nclean usd: `%s`' % k)
+    replace_missing(data, k)
     log_normalize(data, k)
     normalize(data, k)
+
+
+def clean_float(data, k):
+    print_primary('\nclean float: `%s`' % k)
+    replace_missing(data, k)
+    normalize(data, k)
+
+
+def clean_int(data, k, Encoders):
+    print_primary('\nclean int: `%s`' % k)
+    # log-normalize a copy
+    k_new = k + '_float'
+    data[k_new] = data[k]
+    log_normalize(data, k_new)
+    normalize(data, k_new)
+    # transform to categorical
+    discretize(data, k, Encoders)
 
 
 def discretize(data, k, E, n_bins=None):
@@ -118,6 +137,7 @@ def discretize(data, k, E, n_bins=None):
     bins = np.repeat(n_bins, X.shape[1])  # e.g. [5,3] for 2 features
     # encode to integers
     # quantile: each bin contains approx. the same number of features
+    print(data[k].dtype)
     strategy = 'uniform' if data[k].dtype == 'int64' else 'quantile'
     est = preprocessing.KBinsDiscretizer(
         n_bins=bins, encode='ordinal', strategy=strategy)
@@ -151,6 +171,7 @@ def select_most_common(data: pd.Series, n=9, key="Other") -> dict:
         least_common.pop(k)
 
     most_common[key] = sum(least_common.values())
+    print('\tCombine %i categories' % len(least_common.keys()))
     return most_common
 
 
