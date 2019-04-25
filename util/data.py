@@ -23,12 +23,18 @@ def count_null_values(data, k):
     return data[k].isnull().sum()
 
 
-def normalize(data, k):
+def normalize(data, k, strict=False):
     print('\tnormalize row')
     #     data[[k]].apply(lambda x: (x - np.mean(x)) / (np.max(x) - np.min(x)))
     #     data[[k]].apply(lambda x: (x - x.mean()) / (x.max() - x.min()))
     x = data[k]
-    data[k] = (x - x.mean()) / (x.max() - x.min())
+    if strict:
+        # minmax, i.e. zero mean and unit range
+        data[k] = (x - x.mean()) / (x.max() - x.min())
+    else:
+        # z-score, i.e. zero mean and unit std dev
+        # z-score is less dependent on outliers
+        data[k] = (x - x.mean()) / x.std()
 
 
 def replace_missing(data, k):
@@ -66,7 +72,7 @@ def clean_id(data, k):
 
 
 def flag_null_values(data, k):
-    # flag null-values (i.e. 1 if null otherwise 0)
+    # add attribute to indicate null-values (i.e. 1 if null otherwise 0)
     k_new = k + '_is_null'
     print('\tFlag null values (adding attr `%s`)' % k_new)
     data[k_new] = 0
@@ -76,14 +82,10 @@ def flag_null_values(data, k):
 
 def clean_star_rating(data, k):
     print_primary('\nclean star rating: `%s`' % k)
-    # possibly flag null values
     if count_null_values(data, k) / data.shape[0] > 0.05:
         flag_null_values(data, k)
 
-    # normalize floats
     normalize(data, k)
-
-    # replace null-values by avg
     replace_missing(data, k)
 
 
