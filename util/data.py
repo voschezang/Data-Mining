@@ -1,4 +1,5 @@
 
+from termcolor import colored
 from sklearn import preprocessing
 import collections
 import numpy as np
@@ -6,26 +7,47 @@ import pandas as pd
 np.random.seed(123)
 
 
-def count_nans(data, k):
+def print_warning(*args):
+    print(colored(*args, 'red'))
+
+
+def print_primary(*args):
+    print(colored(*args, 'green'))
+
+
+def print_secondary(*args):
+    print(colored(*args, 'blue'))
+
+
+def count_null_values(data, k):
     return data[k].isnull().sum()
+
+
+def normalize(data, k):
+    print('\tnormalize row')
+    #     data[[k]].apply(lambda x: (x - np.mean(x)) / (np.max(x) - np.min(x)))
+    #     data[[k]].apply(lambda x: (x - x.mean()) / (x.max() - x.min()))
+    x = data[k]
+    data[k] = (x - x.mean()) / (x.max() - x.min())
 
 
 def replace_missing(data, k):
     row = data[k]
-    n = count_nans(data, k)
+    n = count_null_values(data, k)
     if n > 0:
         n_rel = n / data.shape[0] * 100
-        print('\tReplace %i null values (%0.2f\%)' % (n, n_rel))
+        print('\tReplace %i null values (%0.2f%%)' % (n, n_rel))
     # note that pd.where different than np.where
 #     avg = np.nanmedian([x for x in X])
 #     row = np.where(row.isnan(), row.median(), row)
-    row.where(~row.isnull(), row.median(), inplace=True)
+    # row.where(row.notna(), row.median(), inplace=True)
+    row.fillna(row.median(), inplace=True)
 
 
 def clean_id(data, k):
     """ Clean numerical field `k` that represents an idea
     """
-    print('\nclean id in `%s`' % k)
+    print_primary('\nclean id in `%s`' % k)
     assert data[k].isnull().sum() == 0, 'Missing values shoud be removed'
     row = data[k]
     n = data[k].unique().size
@@ -43,13 +65,35 @@ def clean_id(data, k):
         row.where(row.isin(keys), other, inplace=True)
 
 
+def flag_null_values(data, k):
+    # flag null-values (i.e. 1 if null otherwise 0)
+    k_new = k + '_is_null'
+    print('\tFlag null values (adding attr `%s`)' % k_new)
+    data[k_new] = 0
+    # .where replaces locations where condition is False
+    data[k_new].where(data[k].notna(), 1, inplace=False)
+
+
+def clean_star_rating(data, k):
+    print_primary('\nclean star rating: `%s`' % k)
+    # possibly flag null values
+    if count_null_values(data, k) / data.shape[0] > 0.05:
+        flag_null_values(data, k)
+
+    # normalize floats
+    normalize(data, k)
+
+    # replace null-values by avg
+    replace_missing(data, k)
+
+
 def discretize(data, k, E, n_bins=None):
     """ Encode data[k] to a numerical format (in range [0,n_bins])
     Use stragegy=`uniform` when encoding integers (e.g. id's)
 
     :E Encoder object with attributes `encoders`, `decoders`
     """
-    print('dicretize `%s`' % k)
+    print_secondary('dicretize `%s`' % k)
     if n_bins is None:
         n_bins = data[k].unique().size
     X = data[k]

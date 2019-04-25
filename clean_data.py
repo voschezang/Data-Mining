@@ -30,13 +30,21 @@ class Encoders:
     encoders = {}
 
 
-ids = [k for k in data.columns if 'id' in k]
+columns = data.columns
+ids = [k for k in columns if 'id' in k]
 for k in ids:
     util.data.replace_missing(data_clean, k)
     util.data.clean_id(data_clean, k)
     util.data.discretize(data_clean, k, Encoders)
     categorical.append(k)
 
+columns = [k for k in columns if k not in ids]
+star_ratings = [k for k in columns if 'starrating' in k]
+for k in star_ratings:
+    util.data.clean_star_rating(data_clean, k)
+    categorical.append(k)
 
+
+data_clean.to_csv('data/training_set_VU_DM_clean.csv', sep=';')
 print('\n--------')
 print('Done')
