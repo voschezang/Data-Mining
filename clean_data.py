@@ -86,8 +86,8 @@ util.string.remove(columns, keys)
 
 
 # date_time
-# TODO
 k = 'date_time'
+util.data.clean_date_time(data, k)
 columns.remove(k)
 
 # prop_log_historical_price
