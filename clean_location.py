@@ -6,6 +6,7 @@ import phonenumbers
 from phonenumbers.phonenumberutil import region_code_for_country_code
 import requests
 import pycountry
+import math
 
 np.random.seed(123)
 
@@ -46,51 +47,51 @@ def get_boundingbox_country(country, output_as='boundingbox'):
         output = [float(i) for i in lst]
     return output
 
-def country_id_to_country_longlat(country_id_numbers):
-	visitor_country_id_name = []
-	country_long_lat = []
-	for id in country_id_numbers:
-		print(id)
-		id_region_code = region_code_for_country_code(id)
-		
-		# 'ZZ' denotes 'unknown or unspecified country'
-		if id_region_code == 'ZZ':
-			country_long_lat.append('')
-			print("pass")
-		else:
-			visitor_country_id_name.append(id_region_code)
-			country_info = pycountry.countries.get(alpha_2=id_region_code)
-			if country_info != '':
-				ll = get_boundingbox_country(country=country_info.name, output_as='center')
-				country_long_lat.append(ll)
-
-	return country_long_lat
-
 data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1000)
 
 country_id_numbers = data['visitor_location_country_id']
 
-# visitor_ids = country_id_to_country_longlat(country_id_numbers)
-
 visitor_country_id_name = []
-country_long_lat = []
-i = 0
+countries_long_lat = {}
 
-for id in country_id_numbers:
-	print(id)
-	i +=1
-	print(i, len(country_id_numbers))
+for id in country_id_numbers.unique():
 	id_region_code = region_code_for_country_code(id)
 	
 	# 'ZZ' denotes 'unknown or unspecified country'
 	if id_region_code == 'ZZ':
-		country_long_lat.append('')
-		print("pass")
+		countries_long_lat['ZZ'] = ''
 	else:
 		visitor_country_id_name.append(id_region_code)
 		country_info = pycountry.countries.get(alpha_2=id_region_code)
-		print(country_info.name)
 
 		ll = get_boundingbox_country(country=country_info.name, output_as='center')
-		country_long_lat.append(ll)
+		countries_long_lat[country_info.name] = ll
 
+print(countries_long_lat)
+
+def calculate_distance(a, b):
+	'''
+	Calculate the distance from point a to point b.
+	Variables a and b are tuples containing a longitudal and a latitudal coördinate.
+	'''
+
+	# approximate radius of earth in km
+	R = 6373.0
+
+	lata = math.radians(a[0])
+	lona = math.radians(a[1])
+	latb = math.radians(b[0])
+	lonb = math.radians(b[1])
+
+	distance_lon = lonb - lona
+	distance_lat = latb - lata
+
+	afs = math.sin(distance_lat / 2)**2 + math.cos(lata) * math.cos(latb) * math.sin(distance_lon / 2)**2
+	cir = 2 * math.atan2(math.sqrt(afs), math.sqrt(1 - afs))
+
+	distance = R * cir
+
+	# print("Result:", distance)
+	return distance
+
+calculate_distance(countries_long_lat['Brazil'], countries_long_lat['Tunisia'])
