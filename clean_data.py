@@ -18,7 +18,7 @@ rcParams['font.size'] = 14
 # rcParams['text.usetex'] = True
 # import sklearn
 # from dateutil.parser import parse
-# data = pd.read_csv('data/training_set_VU_DM.csv', sep=';')
+#data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
 
 data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1000)
 # data.columns.sort_values()
