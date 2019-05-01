@@ -47,19 +47,21 @@ def get_boundingbox_country(country, output_as='boundingbox'):
         output = [float(i) for i in lst]
     return output
 
-data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1000)
+data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=5000)
 
 country_id_numbers = data['visitor_location_country_id']
 
 visitor_country_id_name = []
-countries_long_lat = {}
+countries_long_lat = {} 
+countries_long_lat['ZZ'] = ''
 
 for id in country_id_numbers.unique():
 	id_region_code = region_code_for_country_code(id)
 	
 	# 'ZZ' denotes 'unknown or unspecified country'
 	if id_region_code == 'ZZ':
-		countries_long_lat['ZZ'] = ''
+		# countries_long_lat['ZZ'] = ''
+		pass
 	else:
 		visitor_country_id_name.append(id_region_code)
 		country_info = pycountry.countries.get(alpha_2=id_region_code)
@@ -67,7 +69,8 @@ for id in country_id_numbers.unique():
 		ll = get_boundingbox_country(country=country_info.name, output_as='center')
 		countries_long_lat[country_info.name] = ll
 
-print(countries_long_lat)
+with open('countries_long_lat.pkl', 'wb') as pickle_file:
+	pickle.dump(countries_long_lat, pickle_file)
 
 def calculate_distance(a, b):
 	'''
@@ -94,4 +97,7 @@ def calculate_distance(a, b):
 	# print("Result:", distance)
 	return distance
 
-calculate_distance(countries_long_lat['Brazil'], countries_long_lat['Tunisia'])
+# calculate_distance(countries_long_lat['Brazil'], countries_long_lat['Tunisia'])
+
+# with open('countries_long_lat.pkl', 'rb') as pickle_file:
+# 	new_data = pickle.load(pickle_file)
