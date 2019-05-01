@@ -255,7 +255,7 @@ def getDayName(weekday):
 def clean_date_time(data, k) -> pd.DataFrame:
     print_primary('\nclean id in `%s`' % k)
     datetimes = pd.to_datetime(data[k])
-    dayOfWeek = datetimes.dt.weekday  # 0 is monday
+    weekday = datetimes.dt.weekday  # 0 is monday
     year = datetimes.dt.year
     month = datetimes.dt.month
     day = datetimes.dt.day
@@ -266,9 +266,8 @@ def clean_date_time(data, k) -> pd.DataFrame:
     data['day'] = day
     data['hour'] = hour
     data['minute'] = minute
-    data['weekday'] = dayOfWeek.apply(getDayName)
     data.drop(columns=[k], inplace=True)
-    days = pd.get_dummies(data['weekday'])
+    days = pd.get_dummies(weekday.apply(getDayName))
     return data.join(days)
 
 
