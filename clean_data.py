@@ -87,7 +87,8 @@ util.string.remove(columns, keys)
 
 # date_time
 k = 'date_time'
-util.data.clean_date_time(data, k)
+data = util.data.clean_date_time(data, k)
+assert 'Monday' in data.columns
 columns.remove(k)
 
 # prop_log_historical_price
@@ -101,7 +102,7 @@ print(columns)
 
 # save data & encoders
 data.to_csv('data/training_set_VU_DM_clean.csv', sep=';')
-fn = 'encoder.pkl'
+fn = 'data/encoder.pkl'
 with open(fn, 'wb') as f:
     pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
