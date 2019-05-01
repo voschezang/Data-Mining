@@ -21,13 +21,13 @@ rcParams['font.size'] = 14
 #data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
 
 data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1000)
+# data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
 # data.columns.sort_values()
 
 
-class Encoders:
-    discretizers = {}
-    encoders = {}
-
+E = util.data.Encoders()
+E.discretizers = {}
+E.encoders = {}
 
 columns = list(data.columns)
 # id
@@ -35,7 +35,7 @@ keys = [k for k in columns if 'id' in k]
 for k in keys:
     util.data.replace_missing(data, k)
     util.data.clean_id(data, k)
-    util.data.discretize(data, k, Encoders)
+    util.data.discretize(data, k, E)
 util.string.remove(columns, keys)
 
 # star ratings
@@ -51,16 +51,24 @@ for k in keys:
 util.string.remove(columns, keys)
 
 # float
+data["srch_person_per_room_score"] = (
+    data["srch_adults_count"] + data["srch_children_count"]) / data["srch_room_count"]
+data.loc[~(data["srch_person_per_room_score"] < 10000),
+         "srch_person_per_room_score"] = 0
+data["srch_adults_per_room_score"] = data["srch_adults_count"] / \
+    data["srch_room_count"]
 keys = [k for k in columns if 'score' in k]
 for k in keys:
     util.data.clean_float(data, k)
 util.string.remove(columns, keys)
 
 # categorical ints
+# add attributes (bins) for each category of each categorical attr.
+# i.e. encode categories in an explicit format
 keys = util.string.select_if_contains(
     columns, ['count', 'position', 'srch_length_of_stay', 'srch_booking_window'])
 for k in keys:
-    util.data.clean_int(data, k, Encoders)
+    util.data.clean_int(data, k, E)
 util.string.remove(columns, keys)
 
 # flag
@@ -94,17 +102,19 @@ columns.remove(k)
 # prop_log_historical_price
 k = 'prop_log_historical_price'
 util.data.replace_missing(data, k, 0)
-util.data.discretize(data, k, Encoders, n_bins=3)
+util.data.discretize(data, k, E, n_bins=3)
 columns.remove(k)
+
+# add score
+data['score'] = data['click_bool'] + 5 * data['booking_bool']
 
 print(len(columns), 'remaining attrs')
 print(columns)
 
 # save data & encoders
-data.to_csv('data/training_set_VU_DM_clean.csv', sep=';')
-fn = 'data/encoder.pkl'
-with open(fn, 'wb') as f:
-    pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+data.to_csv('data/training_set_VU_DM_clean.csv', sep=';', index=False)
+with open('data/encoder.pkl', 'wb') as f:
+    pickle.dump(E, f, pickle.HIGHEST_PROTOCOL)
 
 print('\n--------')
 print('Done')

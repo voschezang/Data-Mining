@@ -10,6 +10,10 @@ import calendar
 np.random.seed(123)
 
 
+class Encoders:
+    pass
+
+
 def print_warning(*args):
     print(colored(*args, 'red'))
 
@@ -115,7 +119,7 @@ def clean_float(data, k):
     normalize(data, k)
 
 
-def clean_int(data, k, Encoders):
+def clean_int(data, k, E: Encoders):
     print_primary('\nclean int: `%s`' % k)
     # log-normalize a copy
     k_new = k + '_float'
@@ -123,10 +127,26 @@ def clean_int(data, k, Encoders):
     log_normalize(data, k_new)
     normalize(data, k_new)
     # transform to categorical
-    discretize(data, k, Encoders)
+    # return discretize(data, k, E)
+    # if data[k].unique().sum() > 10:
+    # bin numbers to reduce number of categories
+    discretize(data, k, E)
+
+    # get_dummies is done implicitely during encoding
+
+    # categories = pd.get_dummies(data[k])
+    # print('\t\t', [c for c in categories.columns])
+    #
+    # def rename(i):
+    #     return '%s_cat_%i' % (k, i)
+    #
+    # categories.rename(rename, axis='columns', inplace=True)
+    # # TODO make this transformation reversible?
+    # # i.e. combine categories back to a single attr
+    # return data.join(categories)
 
 
-def discretize(data, k, E, n_bins=None):
+def discretize(data, k, E: Encoders, n_bins=None, drop_original_k=False):
     """ Encode data[k] to a numerical format (in range [0,n_bins])
     Use stragegy=`uniform` when encoding integers (e.g. id's)
 
@@ -157,10 +177,10 @@ def discretize(data, k, E, n_bins=None):
             s += '$%s$ & ' % str(st)
         print('\t\t%s & %s\n' % (k, s[:-2]))
 
-#     data[k + ' bin'] = est.transform(X)
-#     data.drop(k)
     data[k] = est.transform(X)
     E.discretizers[k] = est
+    if drop_original_k:
+        data.drop(columns=k, inplace=True)
 
 
 def select_most_common(data: pd.Series, n=9, key="Other") -> dict:
@@ -246,8 +266,9 @@ def clean_date_time(data, k) -> pd.DataFrame:
     data['day'] = day
     data['hour'] = hour
     data['minute'] = minute
-    data['dayOfWeek'] = dayOfWeek.apply(getDayName)
-    days = pd.get_dummies(data['dayOfWeek'])
+    data['weekday'] = dayOfWeek.apply(getDayName)
+    data.drop(columns=[k], inplace=True)
+    days = pd.get_dummies(data['weekday'])
     return data.join(days)
 
 
