@@ -4,7 +4,6 @@ from sklearn import preprocessing
 import collections
 import numpy as np
 import pandas as pd
-from datetime import datetime
 from dateutil.parser import parse
 import calendar
 np.random.seed(123)
