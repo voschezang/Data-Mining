@@ -227,12 +227,14 @@ def fix_label(x):
 #         return times_to_string(data)
 #     return data
 
+
 def getDayName(weekday):
     return calendar.day_name[weekday]
 
+
 def clean_date_time(data, k):
     datetimes = pd.to_datetime(data[k])
-    dayOfWeek = datetimes.dt.weekday #0 is monday
+    dayOfWeek = datetimes.dt.weekday  # 0 is monday
     year = datetimes.dt.year
     month = datetimes.dt.month
     day = datetimes.dt.day
@@ -245,7 +247,8 @@ def clean_date_time(data, k):
     data['minute'] = minute
     data['dayOfWeek'] = dayOfWeek.apply(getDayName)
     days = pd.get_dummies(data['dayOfWeek'])
-    data = data.join(days.iloc[:,0:6])
+    data = data.join(days.iloc[:, 0:6])
+
 
 def times_to_string(times, *args, **kwargs):
     return [time_to_string(time, *args, **kwargs) for time in times]
