@@ -18,9 +18,9 @@ rcParams['font.size'] = 14
 # rcParams['text.usetex'] = True
 # import sklearn
 # from dateutil.parser import parse
-#data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
+data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
 
-data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1000)
+data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=10000)
 # data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
 # data.columns.sort_values()
 
@@ -87,9 +87,18 @@ util.string.remove(columns, keys)
 
 # comp
 keys = [k for k in columns if 'comp' in k]
-for k in keys:
-    # TODO
-    pass
+compList = [k for k in keys if 'rate' in k and 'diff' not in k]
+compDiffList = [k for k in keys if 'rate' in k and 'diff' in k]
+availkeys = [k for k in keys if 'inv' in k]
+data['unavailable_comp'] = data[availkeys].sum(axis=1)
+availCompData = 1-data[availkeys]
+data['available_comp'] = availCompData.sum(axis=1)
+priceLevels = data[compDiffList] 
+for k in range(0,len(compList)):
+    priceLevels[compDiffList[k]] = priceLevels[compDiffList[k]] * data[compList[k]]
+avgPriceLevel = priceLevels.mean(axis=1)
+data['avg_price_comp'] = avgPriceLevel
+    #TODO: outlier removal?
 util.string.remove(columns, keys)
 
 
