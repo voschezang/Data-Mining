@@ -97,6 +97,7 @@ priceLevels = data[compDiffList]
 for k in range(0,len(compList)):
     priceLevels[compDiffList[k]] = priceLevels[compDiffList[k]] * data[compList[k]]
 avgPriceLevel = priceLevels.mean(axis=1)
+avgPriceLevel[avgPriceLevel.isna()] = 0
 data['avg_price_comp'] = avgPriceLevel
     #TODO: outlier removal?
 util.string.remove(columns, keys)
