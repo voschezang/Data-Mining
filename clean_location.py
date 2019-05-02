@@ -4,9 +4,13 @@ import pickle
 import numpy as np
 import phonenumbers
 from phonenumbers.phonenumberutil import region_code_for_country_code
+import iso3166
 import requests
 import pycountry
 import math
+
+# print(iso3166.countries_by_numeric.keys())
+# print(iso3166.countries_by_numeric['004'][1])
 
 np.random.seed(123)
 
@@ -33,10 +37,23 @@ def get_boundingbox_country(country, output_as='boundingbox'):
         list with coordinates as str
     """
     # create url
+    output = -1
     url = '{0}{1}{2}'.format('http://nominatim.openstreetmap.org/search?country=',
                              country,
                              '&format=json&polygon=0')
-    response = requests.get(url).json()[0]
+    response = []
+    w = 0
+    while len(response) == 0:
+    	response = requests.get(url).json()
+    	if len(response) != 0:
+    		response = response[0]
+    	else:
+    		return output
+    	w += 1
+    	if w == 5:
+    		break
+    # response = response[0]
+
 
     # parse response to list
     # if output_as == 'boundingbox':
@@ -45,33 +62,39 @@ def get_boundingbox_country(country, output_as='boundingbox'):
     if output_as == 'center':
         lst = [response.get(key) for key in ['lat','lon']]
         output = [float(i) for i in lst]
+
     return output
 
-data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1000)
+def country_coordinates(country_id_numbers):
+	'''
+	Get and put country coordinates in a dictionary.
+	'''
+	countries_long_lat = {} 
 
-country_id_numbers = data['visitor_location_country_id']
+	for id in country_id_numbers.unique():
+		id_region_code = region_code_for_country_code(id)
+		id_str = str(id)
+		if str(id) in iso3166.countries_by_numeric:
+			# print("key in dict")
+			id_region_code = iso3166.countries_by_numeric[str(id)][1]
+		else: 
+			id_region_code = region_code_for_country_code(id)
 
-countries_long_lat = {} 
-countries_long_lat[-1] = ''
+		# 'ZZ' denotes 'unknown or unspecified country'
+		if id_region_code == 'ZZ':
+			countries_long_lat[id] = -1
+			# countries_long_lat['ZZ'] = ''
+			pass
+		else:
+			country_info = pycountry.countries.get(alpha_2=id_region_code)
 
-for id in country_id_numbers.unique():
-	id_region_code = region_code_for_country_code(id)
-	
-	# 'ZZ' denotes 'unknown or unspecified country'
-	if id_region_code == 'ZZ':
-		# countries_long_lat['ZZ'] = ''
-		pass
-	else:
-		country_info = pycountry.countries.get(alpha_2=id_region_code)
+			# get longitudal and latitudal coordinates of country
+			ll = get_boundingbox_country(country=country_info.name, output_as='center')
+			
+			# key is the country id number
+			countries_long_lat[id] = ll
 
-		# get longitudal and latitudal coordinates of country
-		ll = get_boundingbox_country(country=country_info.name, output_as='center')
-		
-		# key is the country id number
-		countries_long_lat[id] = ll
-
-with open('countries_long_lat.pkl', 'wb') as pickle_file:
-	pickle.dump(countries_long_lat, pickle_file)
+	return countries_long_lat
 
 def calculate_distance(a, b):
 	'''
@@ -80,7 +103,13 @@ def calculate_distance(a, b):
 	'''
 
 	# approximate radius of earth in km
+	if a == -1 or b == -1:
+		distance = np.nan
+		return distance
+
 	R = 6373.0
+
+	# print("A", a)
 
 	lata = math.radians(a[0])
 	lona = math.radians(a[1])
@@ -140,8 +169,50 @@ def make_distance_matrix(countries_long_lat):
 	# print(distance_matrix)
 	return distance_matrix
 
-distance_matrix = make_distance_matrix(countries_long_lat)
-print(distance_matrix)
+def make_distance_dict(countries_long_lat):
+	distances = {}
+	for key1 in countries_long_lat:
+		distances[key1] = {}
+
+	for key1 in countries_long_lat:
+		for key2 in countries_long_lat:
+			c1 = countries_long_lat[key1]
+			c2 = countries_long_lat[key2]
+
+			if c1 == -1 or c2 == -1:
+				distances[key1][key2] = np.nan
+
+			# if the countries pointed by the key are the samen distance is 0
+			elif c1 == c2:
+				distances[key1][key2] = 0
+
+			else:
+				distances[key1][key2] = calculate_distance(c1, c2)
+
+	return distances
+
+data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
+
+country_id_numbers = data['visitor_location_country_id']
+
+countries_long_lat = country_coordinates(country_id_numbers)
+
+distances = make_distance_dict(countries_long_lat)
+
+print('unique', len(country_id_numbers.unique()))
+print('unique coordinates', len(countries_long_lat))
+c = 0 
+
+print(countries_long_lat)
+for country in countries_long_lat:
+	if countries_long_lat[country] != -1:
+		c +=1
+
+print(c)
+
+# print("BigDict", distances)
+# with open('countries_long_lat.pkl', 'wb') as pickle_file:
+	# pickle.dump(countries_long_lat, pickle_file)
 
 # with open('countries_long_lat.pkl', 'rb') as pickle_file:
 # 	new_data = pickle.load(pickle_file)
