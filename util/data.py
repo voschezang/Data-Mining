@@ -326,7 +326,7 @@ def filter_nans(x, y):
     y = y[i_y]
     return x, y
 
-def attr_travel_distances(data, number_of_rows):
+def attr_travel_distances(data):
     np.random.seed(123)
 
     rcParams['font.family'] = 'serif'
