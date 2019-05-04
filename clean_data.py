@@ -122,8 +122,7 @@ print(len(columns), 'remaining attrs')
 print(columns)
 
 # add travel distance attribute
-number_of_rows = 1000
-travel_distances = util.data.attr_travel_distances(data, number_of_rows)
+travel_distances = util.data.attr_travel_distances(data)
 data['travel_distances'] = travel_distances
 
 # save data & encoders
