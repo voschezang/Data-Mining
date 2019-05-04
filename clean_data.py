@@ -97,6 +97,7 @@ priceLevels = data[compDiffList]
 for k in range(0,len(compList)):
     priceLevels[compDiffList[k]] = priceLevels[compDiffList[k]] * data[compList[k]]
 avgPriceLevel = priceLevels.mean(axis=1)
+avgPriceLevel[avgPriceLevel.isna()] = 0
 data['avg_price_comp'] = avgPriceLevel
     #TODO: outlier removal?
 util.string.remove(columns, keys)
@@ -119,6 +120,10 @@ data['score'] = data['click_bool'] + 5 * data['booking_bool']
 
 print(len(columns), 'remaining attrs')
 print(columns)
+
+# add travel distance attribute
+travel_distances = util.data.attr_travel_distances(data)
+data['travel_distances'] = travel_distances
 
 # save data & encoders
 data.to_csv('data/training_set_VU_DM_clean.csv', sep=';', index=False)
