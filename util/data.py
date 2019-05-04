@@ -7,8 +7,6 @@ import pandas as pd
 from dateutil.parser import parse
 import calendar
 from matplotlib import rcParams
-import pickle
-import phonenumbers
 from phonenumbers.phonenumberutil import region_code_for_country_code
 import iso3166
 import requests
@@ -161,7 +159,7 @@ def discretize(data, k, E: Encoders, n_bins=None, drop_original_k=False):
 
     :E Encoder object with attributes `encoders`, `decoders`
     """
-    print_secondary('dicretize `%s`' % k)
+    print_secondary('\tdicretize `%s`' % k)
     if n_bins is None:
         n_bins = data[k].unique().size
     X = data[k]
@@ -326,6 +324,7 @@ def filter_nans(x, y):
     y = y[i_y]
     return x, y
 
+
 def attr_travel_distances(data):
     np.random.seed(123)
 
@@ -342,7 +341,7 @@ def attr_travel_distances(data):
         country : str
             name of the country in english and lowercase
         output_as : 'str
-            chose from 'boundingbox' or 'center'. 
+            chose from 'boundingbox' or 'center'.
              - 'boundingbox' for [latmin, latmax, lonmin, lonmax]
              - 'center' for [latcenter, loncenter]
 
@@ -369,13 +368,12 @@ def attr_travel_distances(data):
                 break
         # response = response[0]
 
-
         # parse response to list
         # if output_as == 'boundingbox':
         #     lst = response[output_as]
         #     output = [float(i) for i in lst]
         if output_as == 'center':
-            lst = [response.get(key) for key in ['lat','lon']]
+            lst = [response.get(key) for key in ['lat', 'lon']]
             output = [float(i) for i in lst]
 
         return output
@@ -384,7 +382,7 @@ def attr_travel_distances(data):
         '''
         Get and put country coordinates in a dictionary.
         '''
-        countries_long_lat = {} 
+        countries_long_lat = {}
 
         for id in country_id_numbers.unique():
             id_region_code = region_code_for_country_code(id)
@@ -392,7 +390,7 @@ def attr_travel_distances(data):
             if str(id) in iso3166.countries_by_numeric:
                 # print("key in dict")
                 id_region_code = iso3166.countries_by_numeric[str(id)][1]
-            else: 
+            else:
                 id_region_code = region_code_for_country_code(id)
 
             # 'ZZ' denotes 'unknown or unspecified country'
@@ -404,8 +402,9 @@ def attr_travel_distances(data):
                 country_info = pycountry.countries.get(alpha_2=id_region_code)
 
                 # get longitudal and latitudal coordinates of country
-                ll = get_boundingbox_country(country=country_info.name, output_as='center')
-                
+                ll = get_boundingbox_country(
+                    country=country_info.name, output_as='center')
+
                 # key is the country id number
                 countries_long_lat[id] = ll
 
@@ -434,7 +433,8 @@ def attr_travel_distances(data):
         distance_lon = lonb - lona
         distance_lat = latb - lata
 
-        afs = math.sin(distance_lat / 2)**2 + math.cos(lata) * math.cos(latb) * math.sin(distance_lon / 2)**2
+        afs = math.sin(distance_lat / 2)**2 + math.cos(lata) * \
+            math.cos(latb) * math.sin(distance_lon / 2)**2
         cir = 2 * math.atan2(math.sqrt(afs), math.sqrt(1 - afs))
 
         distance = R * cir
@@ -444,10 +444,10 @@ def attr_travel_distances(data):
 
     def make_distance_matrix(countries_long_lat):
         '''
-        Makes a distance matrix of all countries existing in the dictionary. 
-        Puts all keys with unknown 
+        Makes a distance matrix of all countries existing in the dictionary.
+        Puts all keys with unknown
         '''
-        n_o_countries = len(countries_long_lat.keys())+1
+        n_o_countries = len(countries_long_lat.keys()) + 1
         key_number = 1
         distance_matrix = np.zeros((n_o_countries, n_o_countries))
 
@@ -472,14 +472,14 @@ def attr_travel_distances(data):
                     distance_matrix[i][j] = 0
                     i += 1
 
-                # else calculate distance from key1 to key2 and put in matrix  
+                # else calculate distance from key1 to key2 and put in matrix
                 else:
                     c1 = countries_long_lat[key1]
                     c2 = countries_long_lat[key2]
                     distance_matrix[i][j] = calculate_distance(c1, c2)
                     distance_matrix[j][i] = calculate_distance(c1, c2)
                     i += 1
-            j+=1
+            j += 1
 
         # print(distance_matrix)
         return distance_matrix
@@ -529,9 +529,8 @@ def attr_travel_distances(data):
     # create dictionary with distance for all possible country combinations
     distances = make_distance_dict(countries_long_lat)
 
-    # calculate travel distance for every 
-    travel_distances = construct_distance_attribute(country_id_numbers, country_id_destination)
+    # calculate travel distance for every
+    travel_distances = construct_distance_attribute(
+        country_id_numbers, country_id_destination)
 
     return travel_distances
-
-   

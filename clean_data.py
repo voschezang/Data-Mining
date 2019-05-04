@@ -18,9 +18,9 @@ rcParams['font.size'] = 14
 # rcParams['text.usetex'] = True
 # import sklearn
 # from dateutil.parser import parse
-data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
+# data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
 
-data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=10000)
+data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100)
 # data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
 # data.columns.sort_values()
 
@@ -32,6 +32,8 @@ E.encoders = {}
 columns = list(data.columns)
 # id
 keys = [k for k in columns if 'id' in k]
+keys.remove('srch_id')
+keys.remove('prop_id')
 for k in keys:
     util.data.replace_missing(data, k)
     util.data.clean_id(data, k)
@@ -91,15 +93,16 @@ compList = [k for k in keys if 'rate' in k and 'diff' not in k]
 compDiffList = [k for k in keys if 'rate' in k and 'diff' in k]
 availkeys = [k for k in keys if 'inv' in k]
 data['unavailable_comp'] = data[availkeys].sum(axis=1)
-availCompData = 1-data[availkeys]
+availCompData = 1 - data[availkeys]
 data['available_comp'] = availCompData.sum(axis=1)
-priceLevels = data[compDiffList] 
-for k in range(0,len(compList)):
-    priceLevels[compDiffList[k]] = priceLevels[compDiffList[k]] * data[compList[k]]
+priceLevels = data[compDiffList]
+for k in range(0, len(compList)):
+    priceLevels[compDiffList[k]] = priceLevels[compDiffList[k]] * \
+        data[compList[k]]
 avgPriceLevel = priceLevels.mean(axis=1)
 avgPriceLevel[avgPriceLevel.isna()] = 0
 data['avg_price_comp'] = avgPriceLevel
-    #TODO: outlier removal?
+# TODO: outlier removal?
 util.string.remove(columns, keys)
 
 
