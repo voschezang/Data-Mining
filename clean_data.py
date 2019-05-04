@@ -121,6 +121,11 @@ data['score'] = data['click_bool'] + 5 * data['booking_bool']
 print(len(columns), 'remaining attrs')
 print(columns)
 
+# add travel distance attribute
+number_of_rows = 1000
+travel_distances = util.data.attr_travel_distances(data, number_of_rows)
+data['travel_distances'] = travel_distances
+
 # save data & encoders
 data.to_csv('data/training_set_VU_DM_clean.csv', sep=';', index=False)
 with open('data/encoder.pkl', 'wb') as f:
