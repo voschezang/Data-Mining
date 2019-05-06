@@ -18,7 +18,7 @@ rcParams['font.size'] = 14
 # rcParams['text.usetex'] = True
 # import sklearn
 # from dateutil.parser import parse
-data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
+#data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
 
 data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=10000)
 # data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
@@ -62,7 +62,7 @@ for k in keys:
     util.data.clean_float(data, k)
 util.string.remove(columns, keys)
 
-# categorical ints
+# categorical intss
 # add attributes (bins) for each category of each categorical attr.
 # i.e. encode categories in an explicit format
 keys = util.string.select_if_contains(
@@ -113,6 +113,13 @@ columns.remove(k)
 k = 'prop_log_historical_price'
 util.data.replace_missing(data, k, 0)
 util.data.discretize(data, k, E, n_bins=3)
+columns.remove(k)
+
+
+# orig_destin_distance
+k = 'orig_destination_distance'
+util.data.replace_missing(data, k)
+util.data.normalize(data, k)
 columns.remove(k)
 
 # add score
