@@ -21,6 +21,7 @@ rcParams['font.size'] = 14
 #data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
 
 data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=10000)
+testdata=pd.read_csv('data/test_set_VU_DM.csv', sep=',', nrows=1000)
 # data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
 # data.columns.sort_values()
 
@@ -39,6 +40,8 @@ for k in keys:
 util.string.remove(columns, keys)
 
 # star ratings
+data['delta_starrating'] = data['prop_starrating'] - data['visitor_hist_starrating']
+columns.append('delta_starrating')
 keys = [k for k in columns if 'starrating' in k]
 for k in keys:
     util.data.clean_star_rating(data, k)
@@ -46,6 +49,7 @@ util.string.remove(columns, keys)
 
 # usd
 keys = [k for k in columns if 'usd' in k]
+data['has_purch_hist_bool'] = data['visitor_hist_adr_usd'].isnull()
 for k in keys:
     util.data.clean_usd(data, k)
 util.string.remove(columns, keys)
