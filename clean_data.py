@@ -42,6 +42,8 @@ util.string.remove(columns, keys)
 # star ratings
 data['delta_starrating'] = data['prop_starrating'] - data['visitor_hist_starrating']
 columns.append('delta_starrating')
+data.join(pd.get_dummies(data['prop_starrating'], 'prop_starrating_bool'))
+data.join(pd.get_dummies(data['visitor_hist_starrating'], 'hist_starrating_bool'))
 keys = [k for k in columns if 'starrating' in k]
 for k in keys:
     util.data.clean_star_rating(data, k)
@@ -49,7 +51,7 @@ util.string.remove(columns, keys)
 
 # usd
 keys = [k for k in columns if 'usd' in k]
-data['has_purch_hist_bool'] = data['visitor_hist_adr_usd'].isnull()
+data['has_purch_hist_bool'] = ~data['visitor_hist_adr_usd'].isnull()
 for k in keys:
     util.data.clean_usd(data, k)
 util.string.remove(columns, keys)
@@ -61,6 +63,10 @@ data.loc[~(data["srch_person_per_room_score"] < 10000),
          "srch_person_per_room_score"] = 0
 data["srch_adults_per_room_score"] = data["srch_adults_count"] / \
     data["srch_room_count"]
+data.join(pd.get_dummies(data['srch_adults_count'], 'srch_adults_count_bool'))
+data.join(pd.get_dummies(data['srch_room_count'], 'srch_room_count_bool'))
+data.join(pd.get_dummies(data['srch_children_count'], 'srch_children_count_bool'))
+data.join(pd.get_dummies(data['prop_review_score'], 'prop_review_score_bool'))
 keys = [k for k in columns if 'score' in k]
 for k in keys:
     util.data.clean_float(data, k)
@@ -115,6 +121,7 @@ columns.remove(k)
 
 # prop_log_historical_price
 k = 'prop_log_historical_price'
+data['has_historical_price'] = ~data['prop_log_historical_price'].isnull()
 util.data.replace_missing(data, k, 0)
 util.data.discretize(data, k, E, n_bins=3)
 columns.remove(k)
