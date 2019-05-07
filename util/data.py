@@ -37,6 +37,20 @@ def count_null_values(data, k):
     return data[k].isnull().sum()
 
 
+def scores_df(data):
+    """ Convert `data` to a format suitable for the the surprise lib
+    Surprise requires the order item-user-score
+    user corresponds to search_id (i.e. a person), item to property id
+    """
+    scores = {'item': [], 'user': [], 'score': []}
+    for i in range(data.shape[0]):
+        row = data.iloc[i]
+        scores['user'].append(row.srch_id)
+        scores['item'].append(row.prop_id)
+        scores['score'].append(row.score)
+    return pd.DataFrame(scores)
+
+
 def normalize(data, k, strict=False):
     print('\tnormalize row')
     #     data[[k]].apply(lambda x: (x - np.mean(x)) / (np.max(x) - np.min(x)))
@@ -169,6 +183,7 @@ def discretize(data, k, E: Encoders, n_bins=None, drop_original_k=False):
     # quantile: each bin contains approx. the same number of features
     print(data[k].dtype)
     strategy = 'uniform' if data[k].dtype == 'int64' else 'quantile'
+    # TODO encode='onehot'? - or do this in second stage, e.g. for clearer code
     est = preprocessing.KBinsDiscretizer(
         n_bins=bins, encode='ordinal', strategy=strategy)
     est.fit(X)

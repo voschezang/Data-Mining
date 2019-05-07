@@ -20,7 +20,8 @@ rcParams['font.size'] = 14
 # from dateutil.parser import parse
 # data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
 
-data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100)
+# small nrows may lead to discretization erros due to lack of categories
+data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1000)
 # data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
 # data.columns.sort_values()
 
@@ -125,11 +126,15 @@ print(len(columns), 'remaining attrs')
 print(columns)
 
 # add travel distance attribute
-travel_distances = util.data.attr_travel_distances(data)
-data['travel_distances'] = travel_distances
+data['travel_distance'] = util.data.attr_travel_distances(data)
+
+
+# To be used in CF matrix factorization (SVD)
+# scores = util.data.scores_df(data)
 
 # save data & encoders
 data.to_csv('data/training_set_VU_DM_clean.csv', sep=';', index=False)
+# scores.to_csv('data/scores_train.csv', sep=';', index=False)
 with open('data/encoder.pkl', 'wb') as f:
     pickle.dump(E, f, pickle.HIGHEST_PROTOCOL)
 
