@@ -18,10 +18,10 @@ rcParams['font.size'] = 14
 # rcParams['text.usetex'] = True
 # import sklearn
 # from dateutil.parser import parse
-# data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
+#data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
 
-# small nrows may lead to discretization erros due to lack of categories
-data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1000)
+data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=10 * 1000)
+data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',', nrows=1000)
 # data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
 # data.columns.sort_values()
 
@@ -42,6 +42,9 @@ for k in keys:
 util.string.remove(columns, keys)
 
 # star ratings
+data['delta_starrating'] = data['prop_starrating'] - \
+    data['visitor_hist_starrating']
+columns.append('delta_starrating')
 keys = [k for k in columns if 'starrating' in k]
 for k in keys:
     util.data.clean_star_rating(data, k)
@@ -49,6 +52,7 @@ util.string.remove(columns, keys)
 
 # usd
 keys = [k for k in columns if 'usd' in k]
+data['has_purch_hist_bool'] = data['visitor_hist_adr_usd'].isnull()
 for k in keys:
     util.data.clean_usd(data, k)
 util.string.remove(columns, keys)
@@ -65,7 +69,7 @@ for k in keys:
     util.data.clean_float(data, k)
 util.string.remove(columns, keys)
 
-# categorical ints
+# categorical intss
 # add attributes (bins) for each category of each categorical attr.
 # i.e. encode categories in an explicit format
 keys = util.string.select_if_contains(
@@ -117,6 +121,13 @@ columns.remove(k)
 k = 'prop_log_historical_price'
 util.data.replace_missing(data, k, 0)
 util.data.discretize(data, k, E, n_bins=3)
+columns.remove(k)
+
+
+# orig_destin_distance
+k = 'orig_destination_distance'
+util.data.replace_missing(data, k)
+util.data.normalize(data, k)
 columns.remove(k)
 
 # add score
