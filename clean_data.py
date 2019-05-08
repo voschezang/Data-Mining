@@ -1,5 +1,4 @@
 import pandas as pd
-from matplotlib import rcParams
 import pickle
 import util.plot
 import util.data
@@ -7,19 +6,7 @@ import numpy as np
 np.random.seed(123)
 
 
-# import copy
-# import scipy.stats
-# import collections
-# import seaborn as sns
-# from matplotlib.ticker import NullFormatter
-# import matplotlib.pyplot as plt
-rcParams['font.family'] = 'serif'
-rcParams['font.size'] = 14
-# rcParams['text.usetex'] = True
-# import sklearn
-# from dateutil.parser import parse
-#data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
-
+# data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
 data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=10 * 1000)
 data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',', nrows=1000)
 # data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
@@ -45,8 +32,10 @@ util.string.remove(columns, keys)
 data['delta_starrating'] = data['prop_starrating'] - \
     data['visitor_hist_starrating']
 columns.append('delta_starrating')
-data = data.join(pd.get_dummies(data['prop_starrating'], 'prop_starrating_bool'))
-data = data.join(pd.get_dummies(data['visitor_hist_starrating'], 'hist_starrating_bool'))
+data = data.join(pd.get_dummies(
+    data['prop_starrating'], 'prop_starrating_bool'))
+data = data.join(pd.get_dummies(
+    data['visitor_hist_starrating'], 'hist_starrating_bool'))
 keys = [k for k in columns if 'starrating' in k]
 for k in keys:
     util.data.clean_star_rating(data, k)
@@ -59,10 +48,14 @@ data.loc[~(data["srch_person_per_room_score"] < 10000),
          "srch_person_per_room_score"] = 0
 data["srch_adults_per_room_score"] = data["srch_adults_count"] / \
     data["srch_room_count"]
-data = data.join(pd.get_dummies(data['srch_adults_count'], 'srch_adults_count_bool'))
-data = data.join(pd.get_dummies(data['srch_room_count'], 'srch_room_count_bool'))
-data = data.join(pd.get_dummies(data['srch_children_count'], 'srch_children_count_bool'))
-data = data.join(pd.get_dummies(data['prop_review_score'], 'prop_review_score_bool'))
+data = data.join(pd.get_dummies(
+    data['srch_adults_count'], 'srch_adults_count_bool'))
+data = data.join(pd.get_dummies(
+    data['srch_room_count'], 'srch_room_count_bool'))
+data = data.join(pd.get_dummies(
+    data['srch_children_count'], 'srch_children_count_bool'))
+data = data.join(pd.get_dummies(
+    data['prop_review_score'], 'prop_review_score_bool'))
 keys = [k for k in columns if 'score' in k]
 for k in keys:
     util.data.clean_float(data, k)
@@ -141,17 +134,18 @@ util.string.remove(columns, keys)
 
 
 cols = regData.columns
-keys1 = [k for k in cols if 'bool' in k] 
+keys1 = [k for k in cols if 'bool' in k]
 keys2 = [k for k in cols if 'null' in k]
 keys3 = [k for k in cols if 'able_comp'in k]
 keys4 = [k for k in cols if 'location_score' in k]
 keys5 = [k for k in cols if 'prop_log' in k]
-fullK = keys1+keys2+keys3+keys4+keys5  + ['avg_price_comp']
+fullK = keys1 + keys2 + keys3 + keys4 + keys5 + ['avg_price_comp']
 fullK.remove('booking_bool')
 fullK.remove('click_bool')
-regData = data.loc[~data['gross_bookings_usd'].isnull(),:]
-bookingPred = util.data.regress_booking(regData,fullK)
-data.loc[data['gross_bookings_usd'].isnull(),'gross_bookings_usd'] = bookingPred.predict(data.loc[data['gross_bookings_usd'].isnull(),fullK])
+regData = data.loc[~data['gross_bookings_usd'].isnull(), :]
+bookingPred = util.data.regress_booking(regData, fullK)
+data.loc[data['gross_bookings_usd'].isnull(), 'gross_bookings_usd'] = bookingPred.predict(
+    data.loc[data['gross_bookings_usd'].isnull(), fullK])
 
 util.data.clean_usd(data, 'gross_bookings_usd')
 util.string.remove('gross_bookings_usd')

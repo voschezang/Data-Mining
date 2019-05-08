@@ -293,14 +293,15 @@ def clean_date_time(data, k) -> pd.DataFrame:
     days = pd.get_dummies(weekday.apply(getDayName))
     return data.join(days)
 
+
 def regress_booking(regData, fullK):
- 
-    
+
     X = regData[fullK]
     Y = regData['gross_bookings_usd']
     reg = linear_model.LinearRegression()
-    reg.fit(X,Y)
+    reg.fit(X, Y)
     return reg
+
 
 def times_to_string(times, *args, **kwargs):
     return [time_to_string(time, *args, **kwargs) for time in times]
