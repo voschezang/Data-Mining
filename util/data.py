@@ -38,16 +38,27 @@ def count_null_values(data, k):
     return data[k].isnull().sum()
 
 
-def scores_df(data):
+def scores_df(data, user_func=None, item_func=None):
     """ Convert `data` to a format suitable for the the surprise lib
     Surprise requires the order item-user-score
     user corresponds to search_id (i.e. a person), item to property id
+
+    user_func and item_func can be used to transform (group) user/item ids
+    user_func :: (pd.Series, int) -> int
+    item_func :: (pd.Series, int) -> int
     """
     scores = {'item': [], 'user': [], 'score': []}
     for i in range(data.shape[0]):
         row = data.iloc[i]
-        scores['user'].append(row.srch_id)
-        scores['item'].append(row.prop_id)
+        user_id = row.srch_id
+        item_id = row.prop_id
+        if user_func:
+            user_id = user_func(row, user_id)
+        if item_func:
+            item_id = item_func(row, item_id)
+
+        scores['user'].append(user_id)
+        scores['item'].append(item_id)
         scores['score'].append(row.score)
     return pd.DataFrame(scores)
 
@@ -560,19 +571,18 @@ def attr_travel_distances(data):
 
     return travel_distances
 
+
 def calculate_DCG(rows):
-    ''' 
-DCG = sum of all rows(gain / log2(rang in proposal lijst))
-NDCG = (gain / log2) / iDCG
-IDCG = ideal DCG = 3/log2 1 + 3/log2 2 + 3/log2 3 
-
-Gains:
-5 - The user purchased a room at this hotel - booking bool true
-1 - The user clicked through to see more information on this hotel - click bool true
-0 - The user neither clicked on this hotel nor purchased a room at this hotel - both click and book not true
-
     '''
-    score = 0
+    DCG = sum of all rows(gain / log2(rang in proposal lijst))
+    NDCG = (gain / log2) / iDCG
+    IDCG = ideal DCG = 3/log2 1 + 3/log2 2 + 3/log2 3
+
+    Gains:
+    5 - The user purchased a room at this hotel - booking bool true
+    1 - The user clicked through to see more information on this hotel - click bool true
+    0 - The user neither clicked on this hotel nor purchased a room at this hotel - both click and book not true
+    '''
     DCG = 0
     for row in rows.itertuples(index=True, name='Pandas'):
         click_bool = getattr(row, 'click_bool')
@@ -581,29 +591,34 @@ Gains:
 
         if booking_bool != 1:
             if position == 1:
-                DCG += click_bool / position +  5 * booking_bool / position
+                DCG += click_bool / position + 5 * booking_bool / position
             else:
-                DCG += click_bool / math.log2(position) +  5 * booking_bool / math.log2(position) 
+                DCG += click_bool / \
+                    math.log2(position) + 5 * booking_bool / \
+                    math.log2(position)
         else:
             if position == 1:
                 # perfect score
-                DCG += click_bool / position +  5 * booking_bool / position 
+                DCG += click_bool / position + 5 * booking_bool / position
             else:
-                DCG += 5 * booking_bool / math.log2(position) 
+                DCG += 5 * booking_bool / math.log2(position)
     return DCG
+
 
 def rows_srch_id(data, id):
     '''
     Get all rows of a single search id
     '''
-    rows = data.loc[data['srch_id'] == id]  
+    rows = data.loc[data['srch_id'] == id]
     return rows
+
 
 def unique_srch_ids(data):
     '''
     Returns a list of unique search ids
     '''
     return data['srch_id'].unique()
+
 
 def calculate_IDCG(rows):
     total_clicks = rows['click_bool'].sum()
@@ -612,12 +627,13 @@ def calculate_IDCG(rows):
     click_gain = 0
     print(total_clicks, total_bookings)
     while total_clicks > 0:
-        position = 2 
-        click_gain += 1 / math.log2(position) 
+        position = 2
+        click_gain += 1 / math.log2(position)
         position += 1
         total_clicks -= 1
     IDCG = 5 + click_gain
     return IDCG
+
 
 def calculate_NDCG(data):
     '''
