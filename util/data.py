@@ -619,32 +619,79 @@ def unique_srch_ids(data):
     '''
     return data['srch_id'].unique()
 
-
-def calculate_IDCG(rows):
-    total_clicks = rows['click_bool'].sum()
-    total_bookings = rows['booking_bool'].sum()
-    # print(total_clicks, total_bookings)
-    click_gain = 0
-    print(total_clicks, total_bookings)
-    while total_clicks > 0:
-        position = 2
-        click_gain += 1 / math.log2(position)
-        position += 1
-        total_clicks -= 1
-    IDCG = 5 + click_gain
-    return IDCG
+# https://gist.github.com/bwhite/3726239
 
 
-def calculate_NDCG(data):
-    '''
-    Calculates the NDCG
-    '''
-    NDCG_dict = {}
+def dcg_at_k(r, k, method=0):
+    """Score is discounted cumulative gain (dcg)
+    Relevance is positive real values.  Can use binary
+    as the previous methods.
+
+    Args:
+        r: Relevance scores (list or numpy) in rank order
+            (first element is the first item)
+        k: Number of results to consider
+        method: If 0 then weights are [1.0, 1.0, 0.6309, 0.5, 0.4307, ...]
+                If 1 then weights are [1.0, 0.6309, 0.5, 0.4307, ...]
+    Returns:
+        Discounted cumulative gain
+    """
+    r = np.asfarray(r)[:k]
+    if r.size:
+        if method == 0:
+            return r[0] + np.sum(r[1:] / np.log2(np.arange(2, r.size + 1)))
+        elif method == 1:
+            return np.sum(r / np.log2(np.arange(2, r.size + 2)))
+        else:
+            raise ValueError('method must be 0 or 1.')
+    return 0.
+
+# https://gist.github.com/bwhite/3726239
+
+
+def ndcg_at_k(r, k, method=0):
+    """Score is normalized discounted cumulative gain (ndcg)
+    Relevance is positive real values.  Can use binary
+    as the previous methods.
+
+    Args:
+        r: Relevance scores (list or numpy) in rank order
+            (first element is the first item)
+        k: Number of results to consider
+        method: If 0 then weights are [1.0, 1.0, 0.6309, 0.5, 0.4307, ...]
+                If 1 then weights are [1.0, 0.6309, 0.5, 0.4307, ...]
+    Returns:
+        Normalized discounted cumulative gain
+    """
+    dcg_max = dcg_at_k(sorted(r, reverse=True), k, method)
+    if not dcg_max:
+        return 0.
+    return dcg_at_k(r, k, method) / dcg_max
+
+
+def relevance_scores(rows):
+    positions = rows['position']
+    r = np.zeros(positions.max() + 1)
+    for row in rows.itertuples(index=True, name='Pandas'):
+        click_bool = getattr(row, 'click_bool')
+        position = getattr(row, 'position')
+        booking_bool = getattr(row, 'booking_bool')
+        if booking_bool > 0:
+            r[position] = 5
+        else:
+            r[position] = 1 * click_bool
+    return r
+
+
+def NDCG_dict(data):
+    NDCG = {}
     unique_ids = unique_srch_ids(data)
     for id in unique_ids:
         rows = rows_srch_id(data, id)
-        DCG = calculate_DCG(rows)
-        IDCG = calculate_IDCG(rows)
-        # print("id:", id, DCG, IDCG, DCG/IDCG)
-        NDCG_dict[id] = (DCG / IDCG)
-    return NDCG_dict
+        r = relevance_scores(rows)
+        ndcg = ndcg_at_k(r, r.size, method=0)
+        NDCG[id] = ndcg
+    return NDCG
+
+# NDCG = NDCG_dict(data)
+# print(NDCG)
