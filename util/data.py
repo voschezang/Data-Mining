@@ -559,3 +559,63 @@ def attr_travel_distances(data):
         country_id_numbers, country_id_destination)
 
     return travel_distances
+
+def calculate_DCG(rows):
+    ''' 
+DCG = sum of all rows(gain / log2(rang in proposal lijst))
+NDCG = (gain / log2) / iDCG
+IDCG = ideal DCG = 3/log2 1 + 3/log2 2 + 3/log2 3 
+
+Gains:
+5 - The user purchased a room at this hotel - booking bool true
+1 - The user clicked through to see more information on this hotel - click bool true
+0 - The user neither clicked on this hotel nor purchased a room at this hotel - both click and book not true
+
+    '''
+    score = 0
+    for row in rows.itertuples(index=True, name='Pandas'):
+        click_bool = getattr(row, 'click_bool')
+        position = getattr(row, 'position')
+        booking_bool = getattr(row, 'booking_bool')
+
+        if booking_bool != 1:
+            if position == 1:
+                score += click_bool / position +  5 * booking_bool / position + 1 / position
+            else:
+                score += click_bool / math.log2(position) +  5 * booking_bool / math.log2(position) + 1 / position
+        else:
+            if position == 1:
+                score += click_bool / position +  5 * booking_bool / position + 1 / position
+            else:
+                score += 5 * booking_bool / math.log2(position) + 1 / position
+    return score
+
+def rows_srch_id(data, id):
+    '''
+    Get all rows of a single search id
+    '''
+    rows = data.loc[data['srch_id'] == id]  
+    return rows
+
+def unique_srch_ids(data):
+    '''
+    Returns a list of unique search ids
+    '''
+    return data['srch_id'].unique()
+
+def calculate_NDCG(data):
+    '''
+    Calculates the NDCG
+    '''
+    iDCG = 0
+    DCG = 0
+    NDCG_dict = {}
+    unique_ids = unique_srch_ids(data)
+    print(unique_ids)
+    for id in unique_ids:
+        print(id)
+        iDCG += 5
+        rows = rows_srch_id(data, id)
+        DCG += calculate_DCG(rows)
+        NDCG_dict[id] = (DCG / iDCG)
+    return NDCG_dict
