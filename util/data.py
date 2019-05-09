@@ -611,9 +611,9 @@ def calculate_NDCG(data):
     DCG = 0
     NDCG_dict = {}
     unique_ids = unique_srch_ids(data)
-    print(unique_ids)
+    # print(unique_ids)
     for id in unique_ids:
-        print(id)
+        # print(id)
         iDCG += 5
         rows = rows_srch_id(data, id)
         DCG += calculate_DCG(rows)
