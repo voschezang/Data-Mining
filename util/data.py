@@ -620,9 +620,6 @@ def calculate_IDCG(rows):
     return IDCG
 
 def calculate_NDCG(data):
-    '''
-    Calculates the NDCG
-    '''
     NDCG_dict = {}
     unique_ids = unique_srch_ids(data)
     for id in unique_ids:
