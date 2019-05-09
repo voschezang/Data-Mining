@@ -573,6 +573,7 @@ Gains:
 
     '''
     score = 0
+    DCG = 0
     for row in rows.itertuples(index=True, name='Pandas'):
         click_bool = getattr(row, 'click_bool')
         position = getattr(row, 'position')
@@ -580,15 +581,16 @@ Gains:
 
         if booking_bool != 1:
             if position == 1:
-                score += click_bool / position +  5 * booking_bool / position + 1 / position
+                DCG += click_bool / position +  5 * booking_bool / position
             else:
-                score += click_bool / math.log2(position) +  5 * booking_bool / math.log2(position) + 1 / position
+                DCG += click_bool / math.log2(position) +  5 * booking_bool / math.log2(position) 
         else:
             if position == 1:
-                score += click_bool / position +  5 * booking_bool / position + 1 / position
+                # perfect score
+                DCG += click_bool / position +  5 * booking_bool / position 
             else:
-                score += 5 * booking_bool / math.log2(position) + 1 / position
-    return score
+                DCG += 5 * booking_bool / math.log2(position) 
+    return DCG
 
 def rows_srch_id(data, id):
     '''
@@ -603,19 +605,30 @@ def unique_srch_ids(data):
     '''
     return data['srch_id'].unique()
 
+def calculate_IDCG(rows):
+    total_clicks = rows['click_bool'].sum()
+    total_bookings = rows['booking_bool'].sum()
+    # print(total_clicks, total_bookings)
+    click_gain = 0
+    print(total_clicks, total_bookings)
+    while total_clicks > 0:
+        position = 2 
+        click_gain += 1 / math.log2(position) 
+        position += 1
+        total_clicks -= 1
+    IDCG = 5 + click_gain
+    return IDCG
+
 def calculate_NDCG(data):
     '''
     Calculates the NDCG
     '''
-    iDCG = 0
-    DCG = 0
     NDCG_dict = {}
     unique_ids = unique_srch_ids(data)
-    # print(unique_ids)
     for id in unique_ids:
-        # print(id)
-        iDCG += 5
         rows = rows_srch_id(data, id)
-        DCG += calculate_DCG(rows)
-        NDCG_dict[id] = (DCG / iDCG)
+        DCG = calculate_DCG(rows)
+        IDCG = calculate_IDCG(rows)
+        # print("id:", id, DCG, IDCG, DCG/IDCG)
+        NDCG_dict[id] = (DCG / IDCG)
     return NDCG_dict
