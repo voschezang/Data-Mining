@@ -613,15 +613,6 @@ def rows_srch_id(data, id):
     return rows
 
 
-def unique_srch_ids(data):
-    '''
-    Returns a list of unique search ids
-    '''
-    return data['srch_id'].unique()
-
-# https://gist.github.com/bwhite/3726239
-
-
 def dcg_at_k(r, k, method=0):
     """Score is discounted cumulative gain (dcg)
     Relevance is positive real values.  Can use binary
@@ -636,6 +627,7 @@ def dcg_at_k(r, k, method=0):
     Returns:
         Discounted cumulative gain
     """
+    # https://gist.github.com/bwhite/3726239
     r = np.asfarray(r)[:k]
     if r.size:
         if method == 0:
@@ -645,8 +637,6 @@ def dcg_at_k(r, k, method=0):
         else:
             raise ValueError('method must be 0 or 1.')
     return 0.
-
-# https://gist.github.com/bwhite/3726239
 
 
 def ndcg_at_k(r, k, method=0):
@@ -663,6 +653,7 @@ def ndcg_at_k(r, k, method=0):
     Returns:
         Normalized discounted cumulative gain
     """
+    # https://gist.github.com/bwhite/3726239
     dcg_max = dcg_at_k(sorted(r, reverse=True), k, method)
     if not dcg_max:
         return 0.
@@ -685,13 +676,9 @@ def relevance_scores(rows):
 
 def NDCG_dict(data):
     NDCG = {}
-    unique_ids = unique_srch_ids(data)
-    for id in unique_ids:
+    for id in data['srch_id'].unique():
         rows = rows_srch_id(data, id)
         r = relevance_scores(rows)
         ndcg = ndcg_at_k(r, r.size, method=0)
         NDCG[id] = ndcg
     return NDCG
-
-# NDCG = NDCG_dict(data)
-# print(NDCG)

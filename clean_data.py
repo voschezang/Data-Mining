@@ -133,6 +133,7 @@ for k in keys:
 util.string.remove(columns, keys)
 
 
+regData = data.loc[~data['gross_bookings_usd'].isnull(), :]
 cols = regData.columns
 keys1 = [k for k in cols if 'bool' in k]
 keys2 = [k for k in cols if 'null' in k]
@@ -142,13 +143,11 @@ keys5 = [k for k in cols if 'prop_log' in k]
 fullK = keys1 + keys2 + keys3 + keys4 + keys5 + ['avg_price_comp']
 fullK.remove('booking_bool')
 fullK.remove('click_bool')
-regData = data.loc[~data['gross_bookings_usd'].isnull(), :]
 bookingPred = util.data.regress_booking(regData, fullK)
 data.loc[data['gross_bookings_usd'].isnull(), 'gross_bookings_usd'] = bookingPred.predict(
     data.loc[data['gross_bookings_usd'].isnull(), fullK])
 
 util.data.clean_usd(data, 'gross_bookings_usd')
-util.string.remove('gross_bookings_usd')
 
 # add score
 data['score'] = data['click_bool'] + 5 * data['booking_bool']
