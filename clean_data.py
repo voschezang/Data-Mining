@@ -158,6 +158,10 @@ print(columns)
 # add travel distance attribute
 data['travel_distance'] = util.data.attr_travel_distances(data)
 
+# add longitudal and latitudal coordinates of destination country
+lng, lat = util.data.attr_long_lat(data)
+data['longitudal'] = lng
+data['latitude'] = lat
 
 # To be used in CF matrix factorization (SVD)
 # scores = util.data.scores_df(data)
