@@ -1,5 +1,4 @@
 
-from termcolor import colored
 from sklearn import preprocessing
 import collections
 import numpy as np
@@ -14,6 +13,8 @@ import pycountry
 import math
 from sklearn import linear_model
 
+from util import string
+from util.string import print_primary, print_secondary, print_warning
 
 np.random.seed(123)
 
@@ -22,20 +23,12 @@ class Encoders:
     pass
 
 
-def print_warning(*args):
-    print(colored(*args, 'red'))
-
-
-def print_primary(*args):
-    print(colored(*args, 'green'))
-
-
-def print_secondary(*args):
-    print(colored(*args, 'blue'))
-
-
 def count_null_values(data, k):
     return data[k].isnull().sum()
+
+
+def proportion_null_values(data, k):
+    return count_null_values(data, k) / data.shape[0]
 
 
 def scores_df(data, user_func=None, item_func=None):
@@ -64,6 +57,7 @@ def scores_df(data, user_func=None, item_func=None):
 
 
 def normalize(data, k, strict=False):
+    # TODO sklearn normalize, with fit, transform
     print('\tnormalize row')
     #     data[[k]].apply(lambda x: (x - np.mean(x)) / (np.max(x) - np.min(x)))
     #     data[[k]].apply(lambda x: (x - x.mean()) / (x.max() - x.min()))
@@ -87,6 +81,7 @@ def log_normalize(data, k):
 
 
 def replace_missing(data, k, value=None):
+    # TODO rm
     row = data[k]
     n = count_null_values(data, k)
     if n > 0:
@@ -102,7 +97,8 @@ def replace_missing(data, k, value=None):
 
 
 def clean_id(data, k):
-    """ Clean numerical field `k` that represents an idea
+    # TODO rm & use classes.LabelBinarizer
+    """ Clean numerical field `k` that represents an id
     """
     print_primary('\nclean id in `%s`' % k)
     assert data[k].isnull().sum() == 0, 'Missing values shoud be removed'
@@ -122,6 +118,7 @@ def clean_id(data, k):
 
 
 def flag_null_values(data, k):
+    # TODO rm
     # add attribute to indicate null-values (i.e. 1 if null otherwise 0)
     k_new = k + '_is_null'
     print('\tFlag null values (adding attr `%s`)' % k_new)
@@ -131,10 +128,12 @@ def flag_null_values(data, k):
 
 
 def clean_star_rating(data, k):
+    # TODO rm
     print_primary('\nclean star rating: `%s`' % k)
     if count_null_values(data, k) / data.shape[0] > 0.05:
         flag_null_values(data, k)
 
+    # TODO do not normalize but use one-hot encoding
     normalize(data, k)
     replace_missing(data, k)
 
@@ -217,7 +216,7 @@ def discretize(data, k, E: Encoders, n_bins=None, drop_original_k=False):
         data.drop(columns=k, inplace=True)
 
 
-def select_most_common(data: pd.Series, n=9, key="Other") -> dict:
+def select_most_common(data: pd.Series, n=9, key="Other", v=1) -> dict:
     """ Return a dict containing the `n` most common keys and their count.
     :key the name of the new attribute that will replace the minority attributes
     """
@@ -228,8 +227,14 @@ def select_most_common(data: pd.Series, n=9, key="Other") -> dict:
         least_common.pop(k)
 
     most_common[key] = sum(least_common.values())
-    print('\tCombine %i categories' % len(least_common.keys()))
+    if v:
+        print('\tCombine %i categories' % len(least_common.keys()))
     return most_common
+
+
+def replace_uncommon(row: pd.Series, common_keys=[], other=''):
+    # Replace all values that are not in `common_keys`
+    return row.where(row.isin(common_keys), other, inplace=False)
 
 
 def summarize_categorical(data, k_x, k_y, conditional_x=False):

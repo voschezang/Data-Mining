@@ -1,3 +1,17 @@
+from termcolor import colored
+
+
+def print_primary(*args):
+    print(colored(*args, 'green'))
+
+
+def print_secondary(*args):
+    print(colored(*args, 'blue'))
+
+
+def print_warning(*args):
+    print(colored(*args, 'red'))
+
 
 def title(text: str) -> str:
     print(text)
