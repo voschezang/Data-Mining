@@ -31,6 +31,16 @@ def proportion_null_values(data, k):
     return count_null_values(data, k) / data.shape[0]
 
 
+def is_int(row: pd.Series) -> bool:
+    return row.dtype == 'int64' or 'int' in str(row.dtype)
+
+
+def join_inplace(data: pd.DataFrame, rows: np.ndarray, original_k: str, k_suffix='label'):
+    for i in range(rows.shape[1]):
+        print(original_k, i)
+        data['%s_%s%i' % (original_k, k_suffix, i)] = rows[:, i]
+
+
 def scores_df(data, user_func=None, item_func=None):
     """ Convert `data` to a format suitable for the the surprise lib
     Surprise requires the order item-user-score
@@ -57,7 +67,7 @@ def scores_df(data, user_func=None, item_func=None):
 
 
 def normalize(data, k, strict=False):
-    # TODO sklearn normalize, with fit, transform
+    # TODO rm, use sklearn normalize, with fit, transform
     print('\tnormalize row')
     #     data[[k]].apply(lambda x: (x - np.mean(x)) / (np.max(x) - np.min(x)))
     #     data[[k]].apply(lambda x: (x - x.mean()) / (x.max() - x.min()))

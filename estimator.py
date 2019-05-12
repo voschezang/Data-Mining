@@ -1,4 +1,3 @@
-from sklearn.base import TransformerMixin
 import pandas as pd
 from sklearn import preprocessing
 import util.data
@@ -10,6 +9,9 @@ from util.string import print_primary, print_secondary, print_warning
 def fit_transform(steps, data: pd.DataFrame):
     # steps : iterable of Estimator
     for est in steps:
+        print(est)
+        print(est.k)
+        est.extend(data)
         est.fit(data)
         est.transform(data)
 
@@ -17,7 +19,9 @@ def fit_transform(steps, data: pd.DataFrame):
 def transform(steps, data: pd.DataFrame):
     # steps : iterable of Estimator
     for est in steps:
+        est.extend(data)
         est.transform(data)
+
 
 # Estimator
 
@@ -28,16 +32,54 @@ class Estimator:
         self.k = k
         self.est = None
 
+    def extend(self, data: pd.DataFrame):
+        """ Extend the dataframe by adding additional attributes
+        This function should be applied to a dataframe before fitting or before
+        transforming it
+        """
+        pass
+
     def fit(self, data: pd.DataFrame):
+        # fit a model and save the parameters
         pass
 
     def transform(self, data):
+        # use the fitted model to predict attribute values
         raise NotImplementedError
+
+# Estimator Subclasses
+
+
+class Wrapper(Estimator):
+    """ Wrapper for sklearn.preprocessing estimators
+    """
+
+    def __init__(self, k: str, est):
+        super().__init__(k)
+        self.est = est
+
+    def fit(self, data):
+        print('\n', self.est)
+        self.est.fit(data[self.k])  # TODO .values or reshape (-1,1)
+
+    def transform(self, data):
+        data[self.k] = self.est.transform(data[self.k])
+
+
+def MinMaxScaler(k):
+    return Wrapper(k, preprocessing.MinMaxScaler(feature_range=(-1, 1)))
+
+
+def RobustScaler(k):
+    return Wrapper(k, preprocessing.RobustScaler())
+
+
+def PowerTransformer(k):
+    return Wrapper(k, preprocessing.PowerTransformer())
 
 
 class Dummy(Estimator):
-    # def fit(self, data):
-    #     pass
+    # Placeholder, i.e. identity transformation
 
     def transform(self, data):
         pass
@@ -55,10 +97,59 @@ class Imputer(Estimator):
         data[self.k].fillna(self.value, inplace=True)
 
 
+class Discretizer(Estimator):
+    # Bin numerical data
+    """ Encode data[k] to a numerical format (in range [0,n_bins])
+    Use stragegy=`uniform` when encoding integers (e.g. id's)
+
+    :E Encoder object with attributes `encoders`, `decoders`
+    """
+
+    def __init__(self, k):
+        super().__init__(k)
+        self.n_bins = 5
+
+    def fit(self, data):
+        print_primary('\tdicretize `%s`' % self.k)
+        row = data[self.k].values
+        # X = np.array([x for x in X]).reshape(-1, 1)
+        # bins = np.repeat(n_bins, X.shape[1])  # e.g. [5,3] for 2 features
+        # encode to integers
+        # quantile: each bin contains approx. the same number of features
+        print(data[self.k].dtype)
+        strategy = 'uniform' if util.data.is_int(data[self.k]) else 'quantile'
+        # TODO encode='onehot'
+        self.est = preprocessing.KBinsDiscretizer(
+            n_bins=self.n_bins, encode='onehot', strategy=strategy)
+        self.est.fit(row)
+        self.n_bins = self.est.bin_edges_[0].size
+
+    def transform(self, data):
+        s = ''
+        if util.data.is_int(data[self.k]):
+            print('\tAttribute & Number of bins (categories)')
+            print('\t%s & %i \\\\' % (strategy, n_bins))
+        else:
+            print('\tbins (%i, %s):' % (n_bins, strategy))
+            print('\tAttribute & Bin start & Bin 1 & Bin 2 \\\\')
+            for st in [round(a, 3) for a in self.est.bin_edges_[0]]:
+                s += '$%s$ & ' % str(st)
+            print('\t\t%s & %s\n' % (k, s[:-2]))
+
+        rows = self.est.transform(data[k])
+
+        util.data.join_inplace(data, rows, self.k, k_suffix='bin')
+        # data.drop(self.k, axis=1, inplace=True)
+        data.drop(columns=self.k, inplace=True)
+        print('k removed', self.k)
+
+
 class LabelBinarizer(Estimator):
     """ Wrapper for sklearn.preprocessing.LabelBinarizer, allowing
     pandas.DataFrame mutations
-    Can be used to one-hot encode categorical labels
+
+    Can discretize (onehot-encode) categorical attributes (or ints). The least
+    occuring categories are grouped
     """
 
     def __init__(self, k):
@@ -74,7 +165,8 @@ class LabelBinarizer(Estimator):
         # if util.data.proportion_null_values(data, self.k) > max_prop_null_values :
         # flag_null_values(data, self.k)
 
-        if data[self.k].dtype == 'int64' or 'int' in str(data[self.k].dtype):
+        # isinstance is not supported by pd.Series.dtype
+        if util.data.is_int(data[self.k]):
             # TODO or any other int
             self.na_value = data[self.k].max() + 1
         else:
@@ -105,12 +197,15 @@ class LabelBinarizer(Estimator):
         # n_bins = bins, encode = 'onehot', strategy = strategy)
         row = self._transform_na(data)
         row = self._transform_uncommon(row)
-        row = self.est.transform(row)
-        for i in range(row.shape[1]):
-            print(self.k, i)
-            data['%s_label_%i' % (self.k, i)] = row[:, i]
-        data.drop(self.k, axis=1, inplace=True)
-        print('k removed', self.k)
+        rows = self.est.transform(row)
+        # for i in range(row.shape[1]):
+        # print(self.k, i)
+        # data['%s_label_%i' % (self.k, i)] = row[:, i]
+        # data.drop(self.k, axis=1, inplace=True)
+        # print('k removed', self.k)
+        util.data.join_inplace(data, rows, self.k)
+        # data.drop(self.k, axis=1, inplace=True)
+        data.drop(columns=self.k, inplace=True)
 
     def _transform_na(self, data):
         return data[self.k].fillna(self.na_value, inplace=False)
@@ -128,39 +223,48 @@ class LabelBinarizer(Estimator):
 #         print_primary('\nclean id in `%s`' % self.k)
 #         self.est = LabelBinarizer(self.k)
 #         self.est.fit(data)
-
-class DeltaStarRating(Estimator):
-    k = 'delta_starrating'
-
-    def fit(self, data):
-        # TODO standard float-normalization (log?)
-        pass
-
-    def transform(self, data):
-        data[DeltaStarRating.k] = data['prop_starrating'] - \
-            data['visitor_hist_starrating']
-
-
-# class StarRating(Estimator):
-#     def fit(self, data):
 #
-#         data = data.join(pd.get_dummies(
-#             data['prop_starrating'], prefix='prop_starrating_bool'))
-#         columns.append('prop_starrating_bool')
-#         # data = data.join(pd.get_dummies(
-#         # data['visitor_hist_starrating'], prefix='hist_starrating_bool'))
+# class DeltaStarRating(Estimator):
+#     k = 'delta_starrating'
+#
+#     def fit(self, data):
+#         # TODO standard float-normalization (log?)
+#         pass
+#
+#     def transform(self, data):
+#         data[DeltaStarRating.k] = data['prop_starrating'] - \
+#             data['visitor_hist_starrating']
+#
 
-    # def transform(self, data):
-    #     p
+# class MinMaxScaler(Estimator):
+#     """ Wrapper for sklearn.preprocessing.MinMaxScaler
+#     """
+#
+#     def fit(self, data):
+#         self.est=preprocessing.MinMaxScaler(feature_range=(-1, 1))
+#         self.est.fit(data[self.k])
+#
+#     def transform(self, data):
+#         self.est.transform(data[self.k])
+#
+#
+# class RobustScaler(Estimator):
+#     """ Wrapper for sklearn.preprocessing.RobustScaler
+#     Normalize based on zero median (instead of zero mean)
+#     """
+#
+#     def fit(self, data):
+#         self.est=preprocessing.RobustScaler()
+#         self.est.fit(data[self.k])
+#
+#     def transform(self, data):
+#         self.est.transform(data[self.k])
+#
+# class ZScoreNormalizer(Estimator):
+    # assert False
 
 
-class PdEstimator:
-    def __init__(self, est: TransformerMixin, column_name: str):
-        self.est = est
-        self.column_name = column_name
+# class LogNormalizer(Estimator):
+#     assert False
 
-    def fit(self, data):
-        self.est.fit(data[k])
-
-    def transform(self, data):
-        data[k] = self.est.transform(data[k])
+# class ExtendAttributes(Enum):
