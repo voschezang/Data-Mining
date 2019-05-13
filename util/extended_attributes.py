@@ -85,3 +85,6 @@ class ExtendAttributes(NoTransformEstimator):
     def fit(self, data):
         # add score
         data['score'] = data['click_bool'] + 5 * data['booking_bool']
+
+    def transform(self, data):
+        pass

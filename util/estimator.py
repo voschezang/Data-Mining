@@ -67,25 +67,6 @@ def PowerTransformer(k):
     return Wrapper(k, preprocessing.PowerTransformer(), copy=False)
 
 
-class NoTransformEstimator(Estimator):
-    # Placeholder, i.e. identity transformation
-
-    def transform(self, data):
-        pass
-
-
-# class Imputer(Estimator):
-#     """ Imputer class for pandas.DataFrame
-#     """
-#
-#     def fit(self, data):
-#         self.value = data[self.k].median()
-#
-#     def transform(self, data):
-#         # Replace missing values by median
-#         data[self.k].fillna(self.value, inplace=True)
-#
-
 class Discretizer(Estimator):
     # Bin numerical data
     """ Encode data[k] to a numerical format (in range [0,n_bins])
