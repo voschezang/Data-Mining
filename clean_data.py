@@ -7,7 +7,7 @@ Replace missing values by the median (instead of the mean) of the respective
 field, because it is assumed that most distributions are skewed.
 """
 from util.pipeline import Pipeline
-from util.estimator import Imputer, LabelBinarizer, Discretizer, MinMaxScaler, RobustScaler, GrossBooking
+from util.estimator import Imputer, RemoveKey, LabelBinarizer, Discretizer, MinMaxScaler, RobustScaler, GrossBooking
 from util.extended_attributes import ExtendedAttributes, ExtendAttributes
 import pandas as pd
 import util.plot
@@ -30,16 +30,17 @@ steps = []  # list of sklearn estimators
 # combine attributes
 # ExtendAttributes(columns)
 steps.append(ExtendAttributes(columns))
+steps.append(Imputer(ExtendedAttributes.srch_person_per_room_score))
 steps.append(MinMaxScaler(ExtendedAttributes.srch_person_per_room_score))
 steps.append(MinMaxScaler(ExtendedAttributes.srch_adults_per_room_score))
+steps.append(Imputer(ExtendedAttributes.delta_starrating))
 steps.append(MinMaxScaler(ExtendedAttributes.delta_starrating))
 steps.append(Imputer(ExtendedAttributes.visitor_hist_adr_usd_log))
 steps.append(MinMaxScaler(ExtendedAttributes.visitor_hist_adr_usd_log))
 steps.append(Imputer(ExtendedAttributes.price_usd_log))
 steps.append(MinMaxScaler(ExtendedAttributes.price_usd_log))
 steps.append(LabelBinarizer(ExtendedAttributes.weekday))
-# alt: for k in ExtendedAttributes: steps.append(MinMaxNormalizer(k))
-# TODO add MinMaxNormalizer for other keys?
+steps.append(RemoveKey(ExtendedAttributes.weekday))
 
 
 # id
@@ -48,25 +49,21 @@ keys.remove('srch_id')
 keys.remove('prop_id')
 for k in keys:
     steps.append(LabelBinarizer(k))
+    steps.append(RemoveKey(k))
 util.string.remove(columns, keys)
 
 
 # star ratings
-
-
-keys = [k for k in columns if 'starrating' in k and 'hist' not in k
-        and not ExtendedAttributes.delta_starrating == k]
+keys = [k for k in columns if 'starrating' in k and 'hist' not in k and
+        not ExtendedAttributes.delta_starrating == k]
 for k in keys:
-    # util.data.clean_star_rating(data, k)
+    steps.append(Imputer(k))
     steps.append(LabelBinarizer(k))
+    steps.append(RemoveKey(k))
 util.string.remove(columns, keys)
 
-keys = [k for k in columns if 'hist' in k or ExtendedAttributes.delta_starrating == k]
-# TODO
-
-
 # float
-keys = [k for k in columns if 'score' in k]
+keys = [k for k in columns if 'score' in k or k == 'visitor_hist_starrating']
 for k in keys:
     # util.data.clean_float(data, k)
     steps.append(Imputer(k))
@@ -81,7 +78,8 @@ keys = util.string.select_if_contains(
 for k in keys:
     steps.append(Imputer(k))
     steps.append(RobustScaler(k))
-    steps.append(LabelBinarizer(k))  # removes the original class
+    steps.append(LabelBinarizer(k))
+    steps.append(RemoveKey(k))
 util.string.remove(columns, keys)
 
 # flag
@@ -90,18 +88,12 @@ for k in keys:
     steps.append(Imputer(k))
 util.string.remove(columns, keys)
 
-# prop_log_historical_price
-k = 'prop_log_historical_price'
-steps.append(Imputer(k))
-steps.append(Discretizer(k))
-columns.remove(k)
-
-
-# orig_destin_distance
-k = 'orig_destination_distance'
-steps.append(Imputer(k))
-steps.append(RobustScaler(k))
-columns.remove(k)
+keys = ['prop_log_historical_price', 'orig_destination_distance']
+for k in keys:
+    steps.append(Imputer(k))
+    steps.append(RobustScaler(k))
+    steps.append(Discretizer(k))
+util.string.remove(columns, keys)
 
 
 # usd
@@ -113,6 +105,7 @@ keys = [k for k in columns if 'usd' in k]
 for k in keys:
     steps.append(Imputer(k))
     steps.append(RobustScaler(k))
+    steps.append(Discretizer(k))
 util.string.remove(columns, keys)
 
 

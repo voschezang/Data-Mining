@@ -31,8 +31,14 @@ def is_int(row: pd.Series) -> bool:
 
 
 def join_inplace(data: pd.DataFrame, rows: np.ndarray, original_k: str, k_suffix='label'):
-    for i in range(rows.shape[1]):
-        data['%s_%s%i' % (original_k, k_suffix, i)] = rows[:, i]
+    if isinstance(rows, np.ndarray):
+        for i in range(rows.shape[1]):
+            data['%s_%s%i' % (original_k, k_suffix, i)] = rows[:, i]
+    else:
+        # assume sparse array
+        # TODO use sparsity
+        print('sparse array?', type(rows))
+        join_inplace(data, rows.toarray(), original_k, k_suffix)
 
 
 def scores_df(data, user_func=None, item_func=None):

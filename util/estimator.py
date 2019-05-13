@@ -125,9 +125,15 @@ class Discretizer(Estimator):
                 s += '$%s$ & ' % str(st)
             print('\t\t%s & %s\n' % (self.k, s[:-2]))
 
+        # note the sparse output
         rows = self.est.transform(data[self.k].values.reshape(-1, 1))
-
         util.data.join_inplace(data, rows, self.k, k_suffix='bin')
+
+
+class RemoveKey(Estimator):
+    # Remove k, e.g. after discretization
+    def transfrom(self, data):
+        # print(data[self.k + '_bin0'])
         # data.drop(self.k, axis=1, inplace=True)
         data.drop(columns=self.k, inplace=True)
         print('k removed', self.k)
@@ -189,11 +195,6 @@ class LabelBinarizer(Estimator):
         rows = self.est.transform(row)
         # for i in range(row.shape[1]):
         # data['%s_label_%i' % (self.k, i)] = row[:, i]
-        # data.drop(self.k, axis=1, inplace=True)
-        # print('k removed', self.k)
-        util.data.join_inplace(data, rows, self.k)
-        # data.drop(self.k, axis=1, inplace=True)
-        data.drop(columns=self.k, inplace=True)
 
     def _transform_na(self, data):
         return data[self.k].fillna(self.na_value, inplace=False)

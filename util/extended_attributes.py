@@ -6,7 +6,7 @@ from util.estimator import NoTransformEstimator
 import util.data
 
 
-class ExtendedAttributes(Enum):
+class ExtendedAttributes():
     srch_person_per_room_score = "srch_person_per_room_score"
     srch_adults_per_room_score = "srch_adults_per_room_score"
     unavailable_comp = "unavailable_comp"
@@ -27,18 +27,28 @@ class ExtendAttributes(NoTransformEstimator):
             data["srch_room_count"]
         data.loc[data[ExtendedAttributes.srch_person_per_room_score] >= 10000,
                  "srch_person_per_room_score"] = 0
+        # print(data[ExtendedAttributes.srch_person_per_room_score].isna().sum())
         data[ExtendedAttributes.srch_adults_per_room_score] = data["srch_adults_count"] / \
             data["srch_room_count"]
-        data['has_historical_price'] = ~data['prop_log_historical_price'].isnull()
         data[ExtendedAttributes.delta_starrating] = data['prop_starrating'] - \
             data['visitor_hist_starrating']
+
+        # print(data[ExtendedAttributes.delta_starrating])
+        # keys = [str(k) for k in data.columns]
+        # print(str(ExtendedAttributes.delta_starrating), 'delta_starrating')
+        # assert str(ExtendedAttributes.delta_starrating) == 'delta_starrating'
+        # assert str(ExtendedAttributes.delta_starrating) in keys
+        # assert 'delta_starrating' in keys
 
         data[ExtendedAttributes.visitor_hist_adr_usd_log] =  \
             data['visitor_hist_adr_usd'].transform(util.data.signed_log)
         data[ExtendedAttributes.price_usd_log] = \
             data['price_usd'].transform(util.data.signed_log)
 
-        data['has_purch_hist'] = ~data['visitor_hist_adr_usd'].isnull()
+        data['has_purch_hist_bool'] = (
+            ~data['visitor_hist_adr_usd'].isnull()).astype(int)
+        data['has_historical_price'] = (
+            ~data['prop_log_historical_price'].isnull()).astype(int)
 
         keys = [k for k in self.columns if 'comp' in k]
         compList = [k for k in keys if 'rate' in k and 'diff' not in k]
