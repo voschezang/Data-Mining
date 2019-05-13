@@ -1,6 +1,5 @@
 """ All newly added attributes (unparameterized) in a single class
 """
-from enum import Enum
 import pandas as pd
 import calendar
 from util.estimator import NoTransformEstimator
@@ -34,13 +33,6 @@ class ExtendAttributes(NoTransformEstimator):
             data["srch_room_count"]
         data[ExtendedAttributes.delta_starrating] = data['prop_starrating'] - \
             data['visitor_hist_starrating']
-
-        # print(data[ExtendedAttributes.delta_starrating])
-        # keys = [str(k) for k in data.columns]
-        # print(str(ExtendedAttributes.delta_starrating), 'delta_starrating')
-        # assert str(ExtendedAttributes.delta_starrating) == 'delta_starrating'
-        # assert str(ExtendedAttributes.delta_starrating) in keys
-        # assert 'delta_starrating' in keys
 
         data[ExtendedAttributes.visitor_hist_adr_usd_log] =  \
             data['visitor_hist_adr_usd'].transform(util.data.signed_log)
