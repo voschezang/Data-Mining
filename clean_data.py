@@ -163,6 +163,9 @@ lng, lat = util.data.attr_long_lat(data)
 data['longitudal'] = lng
 data['latitude'] = lat
 
+# relevance score per single search put in attribute
+data['relevance'] = util.data.click_book_score(data)
+
 # To be used in CF matrix factorization (SVD)
 # scores = util.data.scores_df(data)
 
