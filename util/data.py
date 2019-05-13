@@ -550,28 +550,6 @@ def construct_distance_attribute(country_id_numbers, country_id_destination):
         # print(id1, id2, distance)
     return travel_distances
 
-# data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=number_of_rows)
-
-country_id_numbers = data['visitor_location_country_id']
-country_id_destination = data['prop_country_id']
-
-# concatenate two series and obtain all unique country id numbers in the data file
-frames = [country_id_numbers, country_id_destination]
-country_id_numbers_v_d = pd.concat(frames)
-
-# obtain coordinates per country id
-countries_long_lat = country_coordinates(country_id_numbers_v_d)
-print(countries_long_lat)
-
-# # create dictionary with distance for all possible country combinations
-# distances = make_distance_dict(countries_long_lat)
-
-# # calculate travel distance for every
-# travel_distances = construct_distance_attribute(
-#     country_id_numbers, country_id_destination)
-
-    # return travel_distances
-
 def long_lat_attr(data):
     country_id_numbers = data['prop_country_id']
     countries_long_lat = country_coordinates(country_id_numbers)
