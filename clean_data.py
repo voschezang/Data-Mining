@@ -39,7 +39,7 @@ steps.append(Imputer(ExtendedAttributes.visitor_hist_adr_usd_log))
 steps.append(MinMaxScaler(ExtendedAttributes.visitor_hist_adr_usd_log))
 steps.append(Imputer(ExtendedAttributes.price_usd_log))
 steps.append(MinMaxScaler(ExtendedAttributes.price_usd_log))
-steps.append(LabelBinarizer(ExtendedAttributes.weekday))
+steps.append(LabelBinarizer(ExtendedAttributes.weekday, use_keys=True))
 steps.append(RemoveKey(ExtendedAttributes.weekday))
 
 

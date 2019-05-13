@@ -132,7 +132,7 @@ class Discretizer(Estimator):
 
 class RemoveKey(Estimator):
     # Remove k, e.g. after discretization
-    def transfrom(self, data):
+    def transform(self, data):
         # print(data[self.k + '_bin0'])
         # data.drop(self.k, axis=1, inplace=True)
         data.drop(columns=self.k, inplace=True)
@@ -147,9 +147,11 @@ class LabelBinarizer(Estimator):
     occuring categories are grouped
     """
 
-    def __init__(self, k):
+    def __init__(self, k, use_keys=False):
+        # :use_keys = use keys as labels
         super().__init__(k)
         self.n_max = 10  # TODO use larger number
+        self.use_keys = use_keys
 
     def fit(self, data):
         """ Find most common catorgies, group uncommon categories under a
@@ -188,13 +190,16 @@ class LabelBinarizer(Estimator):
         self.est.fit(self._transform_uncommon(row))
 
     def transform(self, data):
+        print('transform')
         # self.est = preprocessing.KBinsDiscretizer(
         # n_bins = bins, encode = 'onehot', strategy = strategy)
         row = self._transform_na(data)
         row = self._transform_uncommon(row)
         rows = self.est.transform(row)
-        # for i in range(row.shape[1]):
-        # data['%s_label_%i' % (self.k, i)] = row[:, i]
+        if self.use_keys:
+            util.data.join_inplace(data, rows, self.k, keys=self.est.classes_)
+        else:
+            util.data.join_inplace(data, rows, self.k)
 
     def _transform_na(self, data):
         return data[self.k].fillna(self.na_value, inplace=False)

@@ -27,6 +27,7 @@ class Pipeline:
         """" Fit and Transfrom estimator models
         """
         for est in self.steps:
+            print(est, est.k)
             est.extend(data)
             est.fit(data)
             est.transform(data)

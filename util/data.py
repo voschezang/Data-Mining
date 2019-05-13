@@ -30,10 +30,14 @@ def is_int(row: pd.Series) -> bool:
     return row.dtype == 'int64' or 'int' in str(row.dtype)
 
 
-def join_inplace(data: pd.DataFrame, rows: np.ndarray, original_k: str, k_suffix='label'):
+def join_inplace(data: pd.DataFrame, rows: np.ndarray, original_k: str, k_suffix='label', keys=None):
+    # k_suffix = str or list of str
     if isinstance(rows, np.ndarray):
         for i in range(rows.shape[1]):
-            data['%s_%s%i' % (original_k, k_suffix, i)] = rows[:, i]
+            if keys is None:
+                data['%s_%s%i' % (original_k, k_suffix, i)] = rows[:, i]
+            else:
+                data['%s_%s' % (original_k, keys[i])] = rows[:, i]
     else:
         # assume sparse array
         # TODO use sparsity

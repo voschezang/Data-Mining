@@ -16,7 +16,7 @@ import sklearn.model_selection as ms
 data = pd.read_csv('data/training_set_VU_DM_clean.csv', sep=';', nrows=10000)
 columns = list(data.columns)
 train, test = ms.train_test_split(data, random_state=42, test_size=0.3)
-yLab = list(['click_bool', 'booking_bool','score','position'])
+yLab = list(['click_bool', 'booking_bool', 'score', 'position'])
 trainY = train['score']
 trainYM = train[list(['click_bool', 'booking_bool'])]
 trainX = train.drop(yLab, axis=1)
@@ -35,11 +35,12 @@ weekDays = ['Friday',
             'Sunday',
             'Thursday',
             'Tuesday']
+weekDays = ['weekday_' + k for k in weekDays]
 comps = ['unavailable_comp',
          'available_comp',
          'avg_price_comp']
 otherSelection = ['has_historical_price',
-                 # 'travel_distances',
+                  # 'travel_distances',
                   'delta_starrating',
                   'srch_query_affinity_score',
                   'price_usd',
@@ -51,7 +52,7 @@ otherSelection = ['has_historical_price',
 dateTimes = ['day',
              'hour']
 varsUsed = bools + isNulls + weekDays + comps + otherSelection
-#varsUsed = ['visitor_hist_starrating',
+# varsUsed = ['visitor_hist_starrating',
 #            'visitor_hist_adr_usd',
 #            'prop_starrating',
 #            'prop_review_score',
@@ -81,7 +82,9 @@ varsUsed = bools + isNulls + weekDays + comps + otherSelection
 
 # start training models below
 
-
+for k in varsUsed:
+    if k not in trainX.columns:
+        print(k)
 est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
                                 max_depth=1, random_state=0, loss='ls').fit(trainX[varsUsed], trainY)
 mean_squared_error(testY, est.predict(testX[varsUsed]))

@@ -2,6 +2,7 @@
 """
 from enum import Enum
 import pandas as pd
+import calendar
 from util.estimator import NoTransformEstimator
 import util.data
 
@@ -14,12 +15,13 @@ class ExtendedAttributes():
     delta_starrating = "delta_starrating"
     visitor_hist_adr_usd_log = "visitor_hist_adr_usd_log"
     price_usd_log = "price_usd_log"
-    weekday = "weekday "
+    weekday = "weekday"
 
 
 class ExtendAttributes(NoTransformEstimator):
     def __init__(self, columns):
         self.columns = columns
+        self.k = None
 
     def extend(self, data):
         data[ExtendedAttributes.srch_person_per_room_score] = (
@@ -69,6 +71,7 @@ class ExtendAttributes(NoTransformEstimator):
         # additional attributes
         datetimes = pd.to_datetime(data['date_time'])
         weekday = datetimes.dt.weekday  # 0 is monday
+        weekday = [calendar.day_name[x] for x in weekday]
         year = datetimes.dt.year
         month = datetimes.dt.month
         day = datetimes.dt.day
