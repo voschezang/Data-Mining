@@ -1,26 +1,21 @@
-
-from sklearn import preprocessing
+# from util.string import print_primary, print_secondary, print_warning
+# from util import string
+from sklearn import linear_model
+import math
+import pycountry
+import requests
+import iso3166
+from phonenumbers.phonenumberutil import region_code_for_country_code
+# from matplotlib import rcParams
+import calendar
+from dateutil.parser import parse
+import pandas as pd
+# from sklearn import preprocessing
 import collections
 import numpy as np
-import pandas as pd
-from dateutil.parser import parse
-import calendar
-from matplotlib import rcParams
-from phonenumbers.phonenumberutil import region_code_for_country_code
-import iso3166
-import requests
-import pycountry
-import math
-from sklearn import linear_model
 
-from util import string
-from util.string import print_primary, print_secondary, print_warning
 
 np.random.seed(123)
-
-
-class Encoders:
-    pass
 
 
 def count_null_values(data, k):
@@ -37,7 +32,6 @@ def is_int(row: pd.Series) -> bool:
 
 def join_inplace(data: pd.DataFrame, rows: np.ndarray, original_k: str, k_suffix='label'):
     for i in range(rows.shape[1]):
-        print(original_k, i)
         data['%s_%s%i' % (original_k, k_suffix, i)] = rows[:, i]
 
 
@@ -89,27 +83,6 @@ def select_most_common(data: pd.Series, n=9, key="Other", v=1) -> dict:
 def replace_uncommon(row: pd.Series, common_keys=[], other=''):
     # Replace all values that are not in `common_keys`
     return row.where(row.isin(common_keys), other, inplace=False)
-
-
-def summarize_categorical(data, k_x, k_y, conditional_x=False):
-    # return the averages of each pair of categories
-    # conditional_x means: P(Y|X=x) i.e. the distribution of Y given the value of X
-    categories_x = data[k_x].unique()
-    # categories_y = data[k_y].unique()
-    # init dict
-    summary = collections.defaultdict(dict)
-    # fill dict
-    for c_x in categories_x:
-        view = data.loc[data[k_x] == c_x, k_y]
-        # TODO assert that labels are beautified
-        summary[fix_label(c_x)] = view.value_counts(
-            normalize=conditional_x)  # average
-
-    if not conditional_x:
-        n = sum([a.sum() for a in summary.values()])
-        for k_x in summary.keys():
-            summary[k_x] /= n
-    return summary
 
 
 def fix_labels(labels):

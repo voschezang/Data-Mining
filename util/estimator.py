@@ -105,7 +105,6 @@ class Discretizer(Estimator):
         # bins = np.repeat(n_bins, X.shape[1])  # e.g. [5,3] for 2 features
         # encode to integers
         # quantile: each bin contains approx. the same number of features
-        print(data[self.k].dtype)
         strategy = 'uniform' if util.data.is_int(
             data[self.k]) else 'quantile'
         # TODO encode='onehot'
@@ -189,7 +188,6 @@ class LabelBinarizer(Estimator):
         row = self._transform_uncommon(row)
         rows = self.est.transform(row)
         # for i in range(row.shape[1]):
-        # print(self.k, i)
         # data['%s_label_%i' % (self.k, i)] = row[:, i]
         # data.drop(self.k, axis=1, inplace=True)
         # print('k removed', self.k)
@@ -208,7 +206,6 @@ class LabelBinarizer(Estimator):
 
 class GrossBooking(Estimator):
     def fit(self, data):
-        print('GrossBooking')
         regData = data.loc[~data['gross_bookings_usd'].isnull(), :]
         cols = regData.columns
         keys1 = [k for k in cols if 'bool' in str(k)]

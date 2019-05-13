@@ -6,29 +6,19 @@ As money-related fields are lowerbounded (by zero) they are log-normalized
 Replace missing values by the median (instead of the mean) of the respective
 field, because it is assumed that most distributions are skewed.
 """
-# from sklearn.pipeline import Pipeline
-# import estimator
-# , ExtendAttributes
-from pipeline import Pipeline
-from estimator import Estimator, Imputer, LabelBinarizer, Discretizer, MinMaxScaler, RobustScaler, GrossBooking
-from extended_attributes import ExtendedAttributes, ExtendAttributes
+from util.pipeline import Pipeline
+from util.estimator import Imputer, LabelBinarizer, Discretizer, MinMaxScaler, RobustScaler, GrossBooking
+from util.extended_attributes import ExtendedAttributes, ExtendAttributes
 import pandas as pd
-import pickle
 import util.plot
 import util.data
 import numpy as np
 np.random.seed(123)
 
-# data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
 data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1 * 1000)
-data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',', nrows=1000)
 # data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
-# data.columns.sort_values()
+data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',', nrows=1000)
 
-
-E = util.data.Encoders()
-E.discretizers = {}
-E.encoders = {}
 
 columns = list(data.columns)
 steps = []  # list of sklearn estimators
@@ -50,11 +40,6 @@ steps.append(MinMaxScaler(ExtendedAttributes.price_usd_log))
 steps.append(LabelBinarizer(ExtendedAttributes.weekday))
 # alt: for k in ExtendedAttributes: steps.append(MinMaxNormalizer(k))
 # TODO add MinMaxNormalizer for other keys?
-
-# # apply lin regression to attr before scaling dependent attrs
-# k = 'gross_bookings_usd'
-# steps.append(GrossBooking(k))
-# columns.remove(k)
 
 
 # id
@@ -102,8 +87,6 @@ util.string.remove(columns, keys)
 # flag
 keys = [k for k in columns if 'flag' in k]
 for k in keys:
-    # util.data.print_primary(k)
-    # util.data.replace_missing(data, k)
     steps.append(Imputer(k))
 util.string.remove(columns, keys)
 
