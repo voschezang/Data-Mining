@@ -1,5 +1,4 @@
 
-from termcolor import colored
 from sklearn import preprocessing
 import collections
 import numpy as np
@@ -14,6 +13,8 @@ import pycountry
 import math
 from sklearn import linear_model
 
+from util import string
+from util.string import print_primary, print_secondary, print_warning
 
 np.random.seed(123)
 
@@ -22,20 +23,22 @@ class Encoders:
     pass
 
 
-def print_warning(*args):
-    print(colored(*args, 'red'))
-
-
-def print_primary(*args):
-    print(colored(*args, 'green'))
-
-
-def print_secondary(*args):
-    print(colored(*args, 'blue'))
-
-
 def count_null_values(data, k):
     return data[k].isnull().sum()
+
+
+def proportion_null_values(data, k):
+    return count_null_values(data, k) / data.shape[0]
+
+
+def is_int(row: pd.Series) -> bool:
+    return row.dtype == 'int64' or 'int' in str(row.dtype)
+
+
+def join_inplace(data: pd.DataFrame, rows: np.ndarray, original_k: str, k_suffix='label'):
+    for i in range(rows.shape[1]):
+        print(original_k, i)
+        data['%s_%s%i' % (original_k, k_suffix, i)] = rows[:, i]
 
 
 def scores_df(data, user_func=None, item_func=None):
@@ -63,161 +66,11 @@ def scores_df(data, user_func=None, item_func=None):
     return pd.DataFrame(scores)
 
 
-def normalize(data, k, strict=False):
-    print('\tnormalize row')
-    #     data[[k]].apply(lambda x: (x - np.mean(x)) / (np.max(x) - np.min(x)))
-    #     data[[k]].apply(lambda x: (x - x.mean()) / (x.max() - x.min()))
-    x = data[k]
-    if strict:
-        # minmax, i.e. zero mean and unit range
-        data[k] = (x - x.mean()) / (x.max() - x.min())
-    else:
-        # z-score, i.e. zero mean and unit std dev
-        # z-score is less dependent on outliers
-        data[k] = (x - x.mean()) / x.std()
+def signed_log(x):
+    return np.sign(x) * np.log10(x.abs() + 1e-9)
 
 
-def log_normalize(data, k):
-    print('\tlog-normalize row')
-    x = data[k]
-    # data[k] = np.log10(x)
-    if np.any(x < 0):
-        print_warning('\tSigned log')
-    data[k] = np.sign(x) * np.log10(x.abs() + 1e-9)
-
-
-def replace_missing(data, k, value=None):
-    row = data[k]
-    n = count_null_values(data, k)
-    if n > 0:
-        n_rel = n / data.shape[0] * 100
-        print('\tReplace %i null values (%0.2f%%)' % (n, n_rel))
-    # note that pd.where different than np.where
-#     avg = np.nanmedian([x for x in X])
-#     row = np.where(row.isnan(), row.median(), row)
-    # row.where(row.notna(), row.median(), inplace=True)
-    if value is None:
-        value = row.median()
-    row.fillna(value, inplace=True)
-
-
-def clean_id(data, k):
-    """ Clean numerical field `k` that represents an idea
-    """
-    print_primary('\nclean id in `%s`' % k)
-    assert data[k].isnull().sum() == 0, 'Missing values shoud be removed'
-    row = data[k]
-    n = data[k].unique().size
-    n_max = 9  # TODO use larger number
-    if n > n_max:
-        if row.dtype == 'int64':
-            other = max(data[k].unique()) + 1
-            if other < 1e16:
-                other = 1e16
-        else:
-            other = 'Other'
-        most_common = select_most_common(row, n=n_max - 1, key=other)
-        keys = most_common.keys()
-        row.where(row.isin(keys), other, inplace=True)
-
-
-def flag_null_values(data, k):
-    # add attribute to indicate null-values (i.e. 1 if null otherwise 0)
-    k_new = k + '_is_null'
-    print('\tFlag null values (adding attr `%s`)' % k_new)
-    data[k_new] = 0
-    # .where replaces locations where condition is False
-    data[k_new].where(data[k].notna(), 1, inplace=False)
-
-
-def clean_star_rating(data, k):
-    print_primary('\nclean star rating: `%s`' % k)
-    if count_null_values(data, k) / data.shape[0] > 0.05:
-        flag_null_values(data, k)
-
-    normalize(data, k)
-    replace_missing(data, k)
-
-
-def clean_usd(data, k):
-    print_primary('\nclean usd: `%s`' % k)
-    replace_missing(data, k)
-    log_normalize(data, k)
-    normalize(data, k)
-
-
-def clean_float(data, k):
-    print_primary('\nclean float: `%s`' % k)
-    replace_missing(data, k)
-    normalize(data, k)
-
-
-def clean_int(data, k, E: Encoders):
-    print_primary('\nclean int: `%s`' % k)
-    # log-normalize a copy
-    k_new = k + '_float'
-    data[k_new] = data[k]
-    log_normalize(data, k_new)
-    normalize(data, k_new)
-    # transform to categorical
-    # return discretize(data, k, E)
-    # if data[k].unique().sum() > 10:
-    # bin numbers to reduce number of categories
-    discretize(data, k, E)
-
-    # get_dummies is done implicitely during encoding
-
-    # categories = pd.get_dummies(data[k])
-    # print('\t\t', [c for c in categories.columns])
-    #
-    # def rename(i):
-    #     return '%s_cat_%i' % (k, i)
-    #
-    # categories.rename(rename, axis='columns', inplace=True)
-    # # TODO make this transformation reversible?
-    # # i.e. combine categories back to a single attr
-    # return data.join(categories)
-
-
-def discretize(data, k, E: Encoders, n_bins=None, drop_original_k=False):
-    """ Encode data[k] to a numerical format (in range [0,n_bins])
-    Use stragegy=`uniform` when encoding integers (e.g. id's)
-
-    :E Encoder object with attributes `encoders`, `decoders`
-    """
-    print_secondary('\tdicretize `%s`' % k)
-    if n_bins is None:
-        n_bins = data[k].unique().size
-    X = data[k]
-    X = np.array([x for x in X]).reshape(-1, 1)
-    bins = np.repeat(n_bins, X.shape[1])  # e.g. [5,3] for 2 features
-    # encode to integers
-    # quantile: each bin contains approx. the same number of features
-    print(data[k].dtype)
-    strategy = 'uniform' if data[k].dtype == 'int64' else 'quantile'
-    # TODO encode='onehot'? - or do this in second stage, e.g. for clearer code
-    est = preprocessing.KBinsDiscretizer(
-        n_bins=bins, encode='ordinal', strategy=strategy)
-    est.fit(X)
-    n_bins = est.bin_edges_[0].size
-    s = ''
-    if data[k].dtype == 'int64':
-        print('\tAttribute & Number of bins (categories)')
-        print('\t%s & %i \\\\' % (strategy, n_bins))
-    else:
-        print('\tbins (%i, %s):' % (n_bins, strategy))
-        print('\tAttribute & Bin start & Bin 1 & Bin 2 \\\\')
-        for st in [round(a, 3) for a in est.bin_edges_[0]]:
-            s += '$%s$ & ' % str(st)
-        print('\t\t%s & %s\n' % (k, s[:-2]))
-
-    data[k] = est.transform(X)
-    E.discretizers[k] = est
-    if drop_original_k:
-        data.drop(columns=k, inplace=True)
-
-
-def select_most_common(data: pd.Series, n=9, key="Other") -> dict:
+def select_most_common(data: pd.Series, n=9, key="Other", v=1) -> dict:
     """ Return a dict containing the `n` most common keys and their count.
     :key the name of the new attribute that will replace the minority attributes
     """
@@ -228,8 +81,14 @@ def select_most_common(data: pd.Series, n=9, key="Other") -> dict:
         least_common.pop(k)
 
     most_common[key] = sum(least_common.values())
-    print('\tCombine %i categories' % len(least_common.keys()))
+    if v:
+        print('\tCombine %i categories' % len(least_common.keys()))
     return most_common
+
+
+def replace_uncommon(row: pd.Series, common_keys=[], other=''):
+    # Replace all values that are not in `common_keys`
+    return row.where(row.isin(common_keys), other, inplace=False)
 
 
 def summarize_categorical(data, k_x, k_y, conditional_x=False):
@@ -274,39 +133,12 @@ def fix_label(x):
         return translations[x]
     return x[:max_length]
 
-# parse(data.Bedtime[0]).strftime('%M%m%d'), data.Bedtime[0]
-# parse(data.Bedtime[0]).strftime(year_month_day + hour_min_sec), data.Bedtime[0]
-# def format_data(data):
-#     if ':' in data[0]:
-#         return times_to_string(data)
-#     return data
-
 
 def getDayName(weekday):
     return calendar.day_name[weekday]
 
 
-def clean_date_time(data, k) -> pd.DataFrame:
-    print_primary('\nclean id in `%s`' % k)
-    datetimes = pd.to_datetime(data[k])
-    weekday = datetimes.dt.weekday  # 0 is monday
-    year = datetimes.dt.year
-    month = datetimes.dt.month
-    day = datetimes.dt.day
-    hour = datetimes.dt.hour
-    minute = datetimes.dt.minute
-    data['year'] = year
-    data['month'] = month
-    data['day'] = day
-    data['hour'] = hour
-    data['minute'] = minute
-    data.drop(columns=[k], inplace=True)
-    days = pd.get_dummies(weekday.apply(getDayName))
-    return data.join(days)
-
-
 def regress_booking(regData, fullK):
-
     X = regData[fullK]
     Y = regData['gross_bookings_usd']
     reg = linear_model.LinearRegression()
@@ -360,14 +192,9 @@ def filter_nans(x, y):
     y = y[i_y]
     return x, y
 
-
-def attr_travel_distances(data):
-    np.random.seed(123)
-
-    rcParams['font.family'] = 'serif'
-    rcParams['font.size'] = 14
-
     # https://gis.stackexchange.com/questions/212796/get-lat-lon-extent-of-country-from-name-using-python
+
+
 def get_boundingbox_country(country, output_as='boundingbox'):
     """
     get the bounding box of a country in EPSG4326 given a country name
@@ -414,6 +241,7 @@ def get_boundingbox_country(country, output_as='boundingbox'):
 
     return output
 
+
 def country_coordinates(country_id_numbers):
     '''
     Get and put country coordinates in a dictionary.
@@ -446,6 +274,7 @@ def country_coordinates(country_id_numbers):
 
     return countries_long_lat
 
+
 def calculate_distance(a, b):
     '''
     Calculate the distance from point a to point b.
@@ -477,6 +306,7 @@ def calculate_distance(a, b):
 
     # print("Result:", distance)
     return distance
+
 
 def make_distance_matrix(countries_long_lat):
     '''
@@ -520,7 +350,9 @@ def make_distance_matrix(countries_long_lat):
     # print(distance_matrix)
     return distance_matrix
 
+
 def make_distance_dict(countries_long_lat):
+
     distances = {}
     for key1 in countries_long_lat:
         distances[key1] = {}
@@ -542,13 +374,15 @@ def make_distance_dict(countries_long_lat):
 
     return distances
 
-def construct_distance_attribute(country_id_numbers, country_id_destination):
-    travel_distances = []
-    for (id1, id2) in zip(country_id_numbers, country_id_destination):
-        distance = distances[id1][id2]
-        travel_distances.append(distance)
-        # print(id1, id2, distance)
-    return travel_distances
+
+# def construct_distance_attribute(country_id_numbers, country_id_destination):
+#     travel_distances = []
+#     for (id1, id2) in zip(country_id_numbers, country_id_destination):
+#         distance = distances[id1][id2]
+#         travel_distances.append(distance)
+#         # print(id1, id2, distance)
+#     return travel_distances
+
 
 def long_lat_attr(data):
     country_id_numbers = data['prop_country_id']
@@ -565,6 +399,24 @@ def long_lat_attr(data):
 
     data['longitudal'] = lng
     data['latitude'] = lat
+
+
+def long_lat_attr(data):
+    country_id_numbers = data['prop_country_id']
+    countries_long_lat = country_coordinates(country_id_numbers)
+    lng = []
+    lat = []
+    for id in data['srch_id']:
+        if id in countries_long_lat:
+            lng.append(countries_long_lat[id][0])
+            lat.append(countries_long_lat[id][1])
+        else:
+            lng.append(np.nan)
+            lat.append(np.nan)
+
+    data['longitudal'] = lng
+    data['latitude'] = lat
+
 
 def calculate_DCG(rows):
     '''
@@ -677,6 +529,7 @@ def NDCG_dict(data):
         ndcg = ndcg_at_k(r, r.size, method=0)
         NDCG[id] = ndcg
     return NDCG
+
 
 def click_book_score(data):
     click_book_score = []
