@@ -1,29 +1,8 @@
 import pandas as pd
 from sklearn import preprocessing
+from sklearn import impute
 import util.data
-from util.string import print_primary, print_secondary, print_warning
-
-# Pipeline of Estimators
-
-
-def fit_transform(steps, data: pd.DataFrame):
-    # steps : iterable of Estimator
-    for est in steps:
-        print(est)
-        print(est.k)
-        est.extend(data)
-        est.fit(data)
-        est.transform(data)
-
-
-def transform(steps, data: pd.DataFrame):
-    # steps : iterable of Estimator
-    for est in steps:
-        est.extend(data)
-        est.transform(data)
-
-
-# Estimator
+from util.string import print_primary, print_warning
 
 
 class Estimator:
@@ -47,8 +26,10 @@ class Estimator:
         # use the fitted model to predict attribute values
         raise NotImplementedError
 
-# Estimator Subclasses
 
+###############################################################################
+# Estimator Subclasses
+###############################################################################
 
 class Wrapper(Estimator):
     """ Wrapper for sklearn.preprocessing estimators
@@ -59,43 +40,51 @@ class Wrapper(Estimator):
         self.est = est
 
     def fit(self, data):
-        print('\n', self.est)
-        self.est.fit(data[self.k])  # TODO .values or reshape (-1,1)
+        self.est.fit(data[self.k].values.reshape(-1, 1))
 
     def transform(self, data):
-        data[self.k] = self.est.transform(data[self.k])
+        if util.data.is_int(data[self.k]):
+            data[self.k] = self.est.transform(
+                data[self.k].values.reshape(-1, 1)).astype(int)
+        else:
+            data[self.k] = self.est.transform(
+                data[self.k].values.reshape(-1, 1))
+
+
+def Imputer(k):
+    return Wrapper(k, impute.SimpleImputer(strategy='median', copy=False))
 
 
 def MinMaxScaler(k):
-    return Wrapper(k, preprocessing.MinMaxScaler(feature_range=(-1, 1)))
+    return Wrapper(k, preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False))
 
 
 def RobustScaler(k):
-    return Wrapper(k, preprocessing.RobustScaler())
+    return Wrapper(k, preprocessing.RobustScaler(copy=False))
 
 
 def PowerTransformer(k):
-    return Wrapper(k, preprocessing.PowerTransformer())
+    return Wrapper(k, preprocessing.PowerTransformer(), copy=False)
 
 
-class Dummy(Estimator):
+class NoTransformEstimator(Estimator):
     # Placeholder, i.e. identity transformation
 
     def transform(self, data):
         pass
 
 
-class Imputer(Estimator):
-    """ Imputer class for pandas.DataFrame
-    .tranform replaces missing values by median
-    """
-
-    def fit(self, data):
-        self.value = data[self.k].median()
-
-    def transform(self, data):
-        data[self.k].fillna(self.value, inplace=True)
-
+# class Imputer(Estimator):
+#     """ Imputer class for pandas.DataFrame
+#     """
+#
+#     def fit(self, data):
+#         self.value = data[self.k].median()
+#
+#     def transform(self, data):
+#         # Replace missing values by median
+#         data[self.k].fillna(self.value, inplace=True)
+#
 
 class Discretizer(Estimator):
     # Bin numerical data
@@ -111,32 +100,33 @@ class Discretizer(Estimator):
 
     def fit(self, data):
         print_primary('\tdicretize `%s`' % self.k)
-        row = data[self.k].values
+        # row = data[self.k].values
         # X = np.array([x for x in X]).reshape(-1, 1)
         # bins = np.repeat(n_bins, X.shape[1])  # e.g. [5,3] for 2 features
         # encode to integers
         # quantile: each bin contains approx. the same number of features
         print(data[self.k].dtype)
-        strategy = 'uniform' if util.data.is_int(data[self.k]) else 'quantile'
+        strategy = 'uniform' if util.data.is_int(
+            data[self.k]) else 'quantile'
         # TODO encode='onehot'
         self.est = preprocessing.KBinsDiscretizer(
             n_bins=self.n_bins, encode='onehot', strategy=strategy)
-        self.est.fit(row)
+        self.est.fit(data[self.k].values.reshape(-1, 1))
         self.n_bins = self.est.bin_edges_[0].size
 
     def transform(self, data):
-        s = ''
         if util.data.is_int(data[self.k]):
             print('\tAttribute & Number of bins (categories)')
-            print('\t%s & %i \\\\' % (strategy, n_bins))
+            print('\t%s & %i \\\\' % (self.est.strategy, self.est.n_bins))
         else:
-            print('\tbins (%i, %s):' % (n_bins, strategy))
+            print('\t%s & %i \\\\' % (self.est.strategy, self.est.n_bins))
             print('\tAttribute & Bin start & Bin 1 & Bin 2 \\\\')
+            s = ''
             for st in [round(a, 3) for a in self.est.bin_edges_[0]]:
                 s += '$%s$ & ' % str(st)
-            print('\t\t%s & %s\n' % (k, s[:-2]))
+            print('\t\t%s & %s\n' % (self.k, s[:-2]))
 
-        rows = self.est.transform(data[k])
+        rows = self.est.transform(data[self.k].values.reshape(-1, 1))
 
         util.data.join_inplace(data, rows, self.k, k_suffix='bin')
         # data.drop(self.k, axis=1, inplace=True)
@@ -216,55 +206,27 @@ class LabelBinarizer(Estimator):
                                           self.uncommon_value)
 
 
-# class IdCleaner(Estimator):
-#     """ Clean numerical fields that represent an id
-#     """
-#     def fit(self, data):
-#         print_primary('\nclean id in `%s`' % self.k)
-#         self.est = LabelBinarizer(self.k)
-#         self.est.fit(data)
-#
-# class DeltaStarRating(Estimator):
-#     k = 'delta_starrating'
-#
-#     def fit(self, data):
-#         # TODO standard float-normalization (log?)
-#         pass
-#
-#     def transform(self, data):
-#         data[DeltaStarRating.k] = data['prop_starrating'] - \
-#             data['visitor_hist_starrating']
-#
+class GrossBooking(Estimator):
+    def fit(self, data):
+        print('GrossBooking')
+        regData = data.loc[~data['gross_bookings_usd'].isnull(), :]
+        cols = regData.columns
+        keys1 = [k for k in cols if 'bool' in str(k)]
+        keys2 = [k for k in cols if 'null' in str(k)]
+        keys3 = [k for k in cols if 'able_comp'in str(k)]
+        keys4 = [k for k in cols if 'location_score' in str(k)]
+        keys5 = [k for k in cols if 'prop_log' in str(k)]
+        self.fullK = keys1 + keys2 + keys3 + keys4 + keys5 + ['avg_price_comp']
+        self.fullK.remove('booking_bool')
+        self.fullK.remove('click_bool')
+        self.fullK = [k for k in self.fullK if 'log' not in str(k)]
+        self.est = util.data.regress_booking(regData, self.fullK)
 
-# class MinMaxScaler(Estimator):
-#     """ Wrapper for sklearn.preprocessing.MinMaxScaler
-#     """
-#
-#     def fit(self, data):
-#         self.est=preprocessing.MinMaxScaler(feature_range=(-1, 1))
-#         self.est.fit(data[self.k])
-#
-#     def transform(self, data):
-#         self.est.transform(data[self.k])
-#
-#
-# class RobustScaler(Estimator):
-#     """ Wrapper for sklearn.preprocessing.RobustScaler
-#     Normalize based on zero median (instead of zero mean)
-#     """
-#
-#     def fit(self, data):
-#         self.est=preprocessing.RobustScaler()
-#         self.est.fit(data[self.k])
-#
-#     def transform(self, data):
-#         self.est.transform(data[self.k])
-#
-# class ZScoreNormalizer(Estimator):
-    # assert False
-
-
-# class LogNormalizer(Estimator):
-#     assert False
-
-# class ExtendAttributes(Enum):
+    def transform(self, data):
+        if 'gross_bookings_usd' in data.columns:
+            data.loc[data['gross_bookings_usd'].isnull(), 'gross_bookings_usd'] = \
+                self.est.predict(
+                    data.loc[data['gross_bookings_usd'].isnull(), self.fullK])
+        else:
+            # unlabelled data
+            data['gross_bookings_usd'] = self.est.predict(data[self.fullK])

@@ -87,7 +87,11 @@ def log_normalize(data, k):
     # data[k] = np.log10(x)
     if np.any(x < 0):
         print_warning('\tSigned log')
-    data[k] = np.sign(x) * np.log10(x.abs() + 1e-9)
+    data[k] = signed_log(x)
+
+
+def signed_log(x):
+    return np.sign(x) * np.log10(x.abs() + 1e-9)
 
 
 def replace_missing(data, k, value=None):
@@ -301,27 +305,26 @@ def getDayName(weekday):
     return calendar.day_name[weekday]
 
 
-def clean_date_time(data, k) -> pd.DataFrame:
-    print_primary('\nclean id in `%s`' % k)
-    datetimes = pd.to_datetime(data[k])
-    weekday = datetimes.dt.weekday  # 0 is monday
-    year = datetimes.dt.year
-    month = datetimes.dt.month
-    day = datetimes.dt.day
-    hour = datetimes.dt.hour
-    minute = datetimes.dt.minute
-    data['year'] = year
-    data['month'] = month
-    data['day'] = day
-    data['hour'] = hour
-    data['minute'] = minute
-    data.drop(columns=[k], inplace=True)
-    days = pd.get_dummies(weekday.apply(getDayName))
-    return data.join(days)
+# def clean_date_time(data, k) -> pd.DataFrame:
+#     print_primary('\nclean id in `%s`' % k)
+#     datetimes = pd.to_datetime(data[k])
+#     weekday = datetimes.dt.weekday  # 0 is monday
+#     year = datetimes.dt.year
+#     month = datetimes.dt.month
+#     day = datetimes.dt.day
+#     hour = datetimes.dt.hour
+#     minute = datetimes.dt.minute
+#     data['year'] = year
+#     data['month'] = month
+#     data['day'] = day
+#     data['hour'] = hour
+#     data['minute'] = minute
+#     data.drop(columns=[k], inplace=True)
+#     days = pd.get_dummies(weekday.apply(getDayName))
+#     return data.join(days)
 
 
 def regress_booking(regData, fullK):
-
     X = regData[fullK]
     Y = regData['gross_bookings_usd']
     reg = linear_model.LinearRegression()
