@@ -138,6 +138,7 @@ print(len(columns), 'remaining attrs')  # TODO update this list
 pipeline = Pipeline(steps, data)
 pipeline.transform(data_test)
 data.to_csv('data/training_set_VU_DM_clean.csv', sep=';', index=False)
+data_test.to_csv('data/test_set_VU_DM_clean.csv', sep=';', index=False)
 
 # CF matrix
 # scores = util.data.scores_df(data)
