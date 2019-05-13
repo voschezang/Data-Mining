@@ -152,19 +152,21 @@ util.data.clean_usd(data, 'gross_bookings_usd')
 # add score
 data['score'] = data['click_bool'] + 5 * data['booking_bool']
 
+
+# # add travel distance attribute
+# data['travel_distance'] = util.data.attr_travel_distances(data)
+#
+# # add longitudal and latitudal coordinates of destination country
+# lng, lat = util.data.attr_long_lat(data)
+# data['longitudal'] = lng
+# data['latitude'] = lat
+#
+# # relevance score per single search put in attribute
+# data['relevance'] = util.data.click_book_score(data)
+
+
 print(len(columns), 'remaining attrs')
 print(columns)
-
-# add travel distance attribute
-data['travel_distance'] = util.data.attr_travel_distances(data)
-
-# add longitudal and latitudal coordinates of destination country
-lng, lat = util.data.attr_long_lat(data)
-data['longitudal'] = lng
-data['latitude'] = lat
-
-# relevance score per single search put in attribute
-data['relevance'] = util.data.click_book_score(data)
 
 # To be used in CF matrix factorization (SVD)
 # scores = util.data.scores_df(data)
