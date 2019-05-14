@@ -521,10 +521,5 @@ def click_book_score(data):
         for row in rows.itertuples(index=True, name='Pandas'):
             click_bool = int(getattr(row, 'click_bool'))
             booking_bool = getattr(row, 'booking_bool')
-            if booking_bool == 1:
-                click_book_score.append(5)
-            if click_bool == 1 and booking_bool != 1:
-                click_book_score.append(1)
-            elif booking_bool != 1 and click_bool != 1:
-                click_book_score.append(0)
+            click_book_score.append(min(5, 5 * booking_bool + click_bool))
     return click_book_score
