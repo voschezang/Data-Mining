@@ -15,7 +15,7 @@ import util.data
 import numpy as np
 np.random.seed(123)
 
-data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1 * 1000)
+data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1000 * 1000)
 # data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
 data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',', nrows=1000)
 
@@ -70,16 +70,13 @@ for k in keys:
     steps.append(RobustScaler(k))
 util.string.remove(columns, keys)
 
-# categorical intss
-# add attributes (bins) for each category of each categorical attr.
-# i.e. encode categories in an explicit format
+# categorical ints
 keys = util.string.select_if_contains(
     columns, ['count', 'srch_length_of_stay', 'srch_booking_window'])
 for k in keys:
     steps.append(Imputer(k))
-    steps.append(RobustScaler(k))
     steps.append(LabelBinarizer(k))
-    steps.append(RemoveKey(k))
+    steps.append(RobustScaler(k))
 util.string.remove(columns, keys)
 
 # flag
