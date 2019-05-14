@@ -110,7 +110,8 @@ util.string.remove(columns, keys)
 
 
 # add score
-data['score'] = data['click_bool'] + 5 * data['booking_bool']
+# data['score'] = data['click_bool'] + 5 * data['booking_bool']
+data['score'] = util.data.click_book_score(data)
 
 # TODO???
 # # add travel distance attribute

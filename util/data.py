@@ -515,11 +515,5 @@ def NDCG_dict(data):
 
 
 def click_book_score(data):
-    click_book_score = []
-    for id in data['srch_id'].unique():
-        rows = rows_srch_id(data, id)
-        for row in rows.itertuples(index=True, name='Pandas'):
-            click_bool = int(getattr(row, 'click_bool'))
-            booking_bool = getattr(row, 'booking_bool')
-            click_book_score.append(min(5, 5 * booking_bool + click_bool))
-    return click_book_score
+    return (data['click_bool'] + 5 * data['booking_bool']
+            ).transform(lambda x: min(x, 5))

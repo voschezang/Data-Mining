@@ -2,7 +2,7 @@
 """
 import pandas as pd
 import calendar
-from util.estimator import NoTransformEstimator
+from util.estimator import Estimator
 import util.data
 
 
@@ -17,7 +17,7 @@ class ExtendedAttributes():
     weekday = "weekday"
 
 
-class ExtendAttributes(NoTransformEstimator):
+class ExtendAttributes(Estimator):
     def __init__(self, columns):
         self.columns = columns
         self.k = None
