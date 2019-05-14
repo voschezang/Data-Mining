@@ -493,14 +493,18 @@ def relevance_scores(rows):
     positions = rows['position']
     p_max = int(positions.max()) + 1
     r = np.zeros(p_max)
+    position = 1
     for row in rows.itertuples(index=True, name='Pandas'):
-        click_bool = int(getattr(row, 'click_bool'))
-        position = int(getattr(row, 'position'))
-        booking_bool = getattr(row, 'booking_bool')
-        if booking_bool > 0:
-            r[position] = 5
-        else:
-            r[position] = 1 * click_bool
+        # click_bool = int(getattr(row, 'click_bool'))
+        # position = int(getattr(row, 'position'))
+        # booking_bool = getattr(row, 'booking_bool')
+        score = getattr(row, 'score')
+        r[position] = score
+        position += 1
+        # if booking_bool > 0:
+        #     r[position] = 5
+        # else:
+        #     r[position] = 1 * click_bool
     return r
 
 
