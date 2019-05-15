@@ -41,7 +41,6 @@ def join_inplace(data: pd.DataFrame, rows: np.ndarray, original_k: str, k_suffix
     else:
         # assume sparse array
         # TODO use sparsity
-        print('sparse array?', type(rows))
         join_inplace(data, rows.toarray(), original_k, k_suffix)
 
 

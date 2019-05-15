@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn import preprocessing
 from sklearn import impute
 import util.data
-from util.string import print_primary, print_warning
+from util.string import print_primary, print_secondary, print_warning
 
 
 class Estimator:
@@ -77,10 +77,9 @@ class Discretizer(Estimator):
 
     def __init__(self, k):
         super().__init__(k)
-        self.n_bins = 5
+        self.n_bins = 3
 
     def fit(self, data):
-        print_primary('\tdicretize `%s`' % self.k)
         # row = data[self.k].values
         # X = np.array([x for x in X]).reshape(-1, 1)
         # bins = np.repeat(n_bins, X.shape[1])  # e.g. [5,3] for 2 features
@@ -88,23 +87,23 @@ class Discretizer(Estimator):
         # quantile: each bin contains approx. the same number of features
         strategy = 'uniform' if util.data.is_int(
             data[self.k]) else 'quantile'
-        # TODO encode='onehot'
         self.est = preprocessing.KBinsDiscretizer(
             n_bins=self.n_bins, encode='onehot', strategy=strategy)
         self.est.fit(data[self.k].values.reshape(-1, 1))
         self.n_bins = self.est.bin_edges_[0].size
 
     def transform(self, data):
+        print_primary('\tdicretize `%s`' % self.k)
+        print('\tDiscretize (bin) strategy: %s & n bins: %i \\\\' %
+              (self.est.strategy, self.est.n_bins))
         if util.data.is_int(data[self.k]):
             print('\tAttribute & Number of bins (categories)')
-            print('\t%s & %i \\\\' % (self.est.strategy, self.est.n_bins))
         else:
-            print('\t%s & %i \\\\' % (self.est.strategy, self.est.n_bins))
             print('\tAttribute & Bin start & Bin 1 & Bin 2 \\\\')
             s = ''
             for st in [round(a, 3) for a in self.est.bin_edges_[0]]:
                 s += '$%s$ & ' % str(st)
-            print('\t\t%s & %s\n' % (self.k, s[:-2]))
+            print('\t%s & %s' % (self.k, s[:-2]))
 
         # note the sparse output
         rows = self.est.transform(data[self.k].values.reshape(-1, 1))
@@ -117,7 +116,7 @@ class RemoveKey(Estimator):
         # print(data[self.k + '_bin0'])
         # data.drop(self.k, axis=1, inplace=True)
         data.drop(columns=self.k, inplace=True)
-        print('k removed', self.k)
+        print('\tk removed', self.k)
 
 
 class LabelBinarizer(Estimator):
@@ -128,10 +127,10 @@ class LabelBinarizer(Estimator):
     occuring categories are grouped
     """
 
-    def __init__(self, k, use_keys=False):
+    def __init__(self, k, n_max=4, use_keys=False):
         # :use_keys = use keys as labels
         super().__init__(k)
-        self.n_max = 10  # TODO use larger number
+        self.n_max = n_max
         self.use_keys = use_keys
 
     def fit(self, data):
@@ -168,17 +167,19 @@ class LabelBinarizer(Estimator):
             row, n=self.n_max - 1, key=self.uncommon_value, v=0)
         self.common_keys = most_common.keys()
         self.est = preprocessing.LabelBinarizer()
-        self.est.fit(self._transform_uncommon(row))
+        transformed_row = self._transform_uncommon(row)
+        self.est.fit(transformed_row)
+        print('\tLabels:', list(self.common_keys))
 
     def transform(self, data):
-        print('transform')
         # self.est = preprocessing.KBinsDiscretizer(
         # n_bins = bins, encode = 'onehot', strategy = strategy)
         row = self._transform_na(data)
         row = self._transform_uncommon(row)
         rows = self.est.transform(row)
         if self.use_keys:
-            util.data.join_inplace(data, rows, self.k, keys=self.est.classes_)
+            keys = list(self.est.classes_)
+            util.data.join_inplace(data, rows, self.k, keys=keys)
         else:
             util.data.join_inplace(data, rows, self.k)
 
@@ -187,12 +188,13 @@ class LabelBinarizer(Estimator):
 
     def _transform_uncommon(self, row):
         # Replace all values that are not in `common_keys`
-        return util.data.replace_uncommon(row, self.common_keys,
+        return util.data.replace_uncommon(row, list(self.common_keys),
                                           self.uncommon_value)
 
 
 class GrossBooking(Estimator):
     def fit(self, data):
+        print_secondary('\tGrossBooking fit')
         regData = data.loc[~data['gross_bookings_usd'].isnull(), :]
         cols = regData.columns
         keys1 = [k for k in cols if 'bool' in str(k)]
@@ -207,6 +209,7 @@ class GrossBooking(Estimator):
         self.est = util.data.regress_booking(regData, self.fullK)
 
     def transform(self, data):
+        print_secondary('\tGrossBooking transform')
         if 'gross_bookings_usd' in data.columns:
             data.loc[data['gross_bookings_usd'].isnull(), 'gross_bookings_usd'] = \
                 self.est.predict(

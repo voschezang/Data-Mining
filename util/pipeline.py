@@ -2,6 +2,7 @@
 sklearn Pipeline) but merely fits estimator models and transforms data.
 """
 import pandas as pd
+import sys
 
 
 class Pipeline:
@@ -12,7 +13,6 @@ class Pipeline:
         """
         self.steps = steps
         self._fit_transform(data)
-        # Pipeline.fit_transform(self.steps, data)
 
     def transform(self, data: pd.DataFrame):
         # Pipeline.transform(self.steps, data)
@@ -22,6 +22,7 @@ class Pipeline:
         for est in self.steps:
             est.extend(data)
             est.transform(data)
+            # print('mem size', sys.getsizeof(data))
 
     def _fit_transform(self,  data: pd.DataFrame):
         """" Fit and Transfrom estimator models
@@ -31,3 +32,4 @@ class Pipeline:
             est.extend(data)
             est.fit(data)
             est.transform(data)
+            # print('mem size', sys.getsizeof(data))

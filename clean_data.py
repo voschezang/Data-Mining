@@ -11,14 +11,15 @@ from util.estimator import Imputer, RemoveKey, LabelBinarizer, Discretizer, MinM
 from util.extended_attributes import ExtendedAttributes, ExtendAttributes
 import pandas as pd
 import util.plot
+from util.string import print_primary
+import gc
 import util.data
 import numpy as np
 np.random.seed(123)
 
-data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=1000 * 1000)
-# data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100000)
-data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',', nrows=1000)
-
+data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
+# data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100 * 1000)
+# data = data.to_sparse(fill_value=0)
 
 columns = list(data.columns)
 steps = []  # list of sklearn estimators
@@ -39,7 +40,7 @@ steps.append(Imputer(ExtendedAttributes.visitor_hist_adr_usd_log))
 steps.append(MinMaxScaler(ExtendedAttributes.visitor_hist_adr_usd_log))
 steps.append(Imputer(ExtendedAttributes.price_usd_log))
 steps.append(MinMaxScaler(ExtendedAttributes.price_usd_log))
-steps.append(LabelBinarizer(ExtendedAttributes.weekday, use_keys=True))
+steps.append(LabelBinarizer(ExtendedAttributes.weekday, 5, use_keys=True))
 steps.append(RemoveKey(ExtendedAttributes.weekday))
 
 
@@ -54,8 +55,8 @@ util.string.remove(columns, keys)
 
 
 # star ratings
-keys = [k for k in columns if 'starrating' in k and 'hist' not in k and
-        not ExtendedAttributes.delta_starrating == k]
+keys = [k for k in columns if 'starrating' in k and 'hist' not in k
+        and not ExtendedAttributes.delta_starrating == k]
 for k in keys:
     steps.append(Imputer(k))
     steps.append(LabelBinarizer(k))
@@ -70,12 +71,13 @@ for k in keys:
     steps.append(RobustScaler(k))
 util.string.remove(columns, keys)
 
-# categorical ints
+# ints
 keys = util.string.select_if_contains(
     columns, ['count', 'srch_length_of_stay', 'srch_booking_window'])
 for k in keys:
     steps.append(Imputer(k))
-    steps.append(LabelBinarizer(k))
+    # steps.append(LabelBinarizer(k))
+    steps.append(Discretizer(k))
     steps.append(RobustScaler(k))
 util.string.remove(columns, keys)
 
@@ -85,13 +87,18 @@ for k in keys:
     steps.append(Imputer(k))
 util.string.remove(columns, keys)
 
-keys = ['prop_log_historical_price', 'orig_destination_distance']
-for k in keys:
-    steps.append(Imputer(k))
-    steps.append(RobustScaler(k))
-    steps.append(Discretizer(k))
-util.string.remove(columns, keys)
+k = 'prop_log_historical_price'
+steps.append(Imputer(k))
+steps.append(RobustScaler(k))
+columns.remove(k)
 
+k = 'orig_destination_distance'
+steps.append(Imputer(k))
+steps.append(Discretizer(k))
+steps.append(RobustScaler(k))
+# steps.append(MinMaxScaler(k))
+# steps.append(RemoveKey(k))
+columns.remove(k)
 
 # usd
 k = 'gross_bookings_usd'
@@ -101,14 +108,10 @@ columns.remove(k)
 keys = [k for k in columns if 'usd' in k]
 for k in keys:
     steps.append(Imputer(k))
-    steps.append(RobustScaler(k))
+    # steps.append(RobustScaler(k))
     steps.append(Discretizer(k))
+    steps.append(RemoveKey(k))
 util.string.remove(columns, keys)
-
-
-# add score
-# data['score'] = data['click_bool'] + 5 * data['booking_bool']
-data['score'] = util.data.click_book_score(data)
 
 # TODO???
 # # add travel distance attribute
@@ -132,15 +135,24 @@ print(len(columns), 'remaining attrs')  # TODO update this list
 # Apply pipeline
 ###############################################################################
 
-
+print_primary('\n ----- \n Fit estimator models on training data \n ---- \n')
 pipeline = Pipeline(steps, data)
-pipeline.transform(data_test)
+# save data to disk
+# with open('data/pipeline.pkl', 'wb') as f:
+# pickle.dump(pipeline, f, pickle.HIGHEST_PROTOCOL)
 data.to_csv('data/training_set_VU_DM_clean.csv', sep=';', index=False)
-data_test.to_csv('data/test_set_VU_DM_clean.csv', sep=';', index=False)
+data = None
+# clear memory
+gc.collect()
 
-# CF matrix
-# scores = util.data.scores_df(data)
-# scores.to_csv('data/scores_train.csv', sep=';', index=False)
+# Transfrom test data
+print_primary('\n\n ----- \n Transform test data \n ---- \n\n')
+data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',')
+# data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',', nrows=1000 * 1000)
+
+pipeline.transform(data_test)
+# data_test.to_csv('data/test_set_VU_DM_clean.csv', sep=';', index=False)
+data_test.to_csv('data/test_set_VU_DM_clean.csv', sep=';', index=False)
 
 print('\n--------')
 print('Done')

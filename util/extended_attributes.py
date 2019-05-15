@@ -84,7 +84,7 @@ class ExtendAttributes(Estimator):
 
     def fit(self, data):
         # add score
-        data['score'] = data['click_bool'] + 5 * data['booking_bool']
+        data['score'] = util.data.click_book_score(data)
 
     def transform(self, data):
         pass
