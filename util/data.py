@@ -492,26 +492,29 @@ def relevance_scores(rows):
     positions = rows['position']
     p_max = int(positions.max()) + 1
     r = np.zeros(p_max)
+    position = 1
     for row in rows.itertuples(index=True, name='Pandas'):
-        click_bool = int(getattr(row, 'click_bool'))
-        position = int(getattr(row, 'position'))
-        booking_bool = getattr(row, 'booking_bool')
-        if booking_bool > 0:
-            r[position] = 5
-        else:
-            r[position] = 1 * click_bool
+        # click_bool = int(getattr(row, 'click_bool'))
+        # position = int(getattr(row, 'position'))
+        # booking_bool = getattr(row, 'booking_bool')
+        score = getattr(row, 'score')
+        r[position] = score
+        position += 1
+        # if booking_bool > 0:
+        #     r[position] = 5
+        # else:
+        #     r[position] = 1 * click_bool
     return r
 
 
-def NDCG_dict(data):
-    NDCG = {}
+def DCG_dict(data):
+    DCG = {}
     for id in data['srch_id'].unique():
         rows = rows_srch_id(data, id)
         r = relevance_scores(rows)
-        ndcg = ndcg_at_k(r, r.size, method=0)
-        NDCG[id] = ndcg
-    return NDCG
-
+        dcg = dcg_at_k(r, r.size, method=0)
+        DCG[id] = dcg
+    return DCG
 
 def click_book_score(data):
     return (data['click_bool'] + 5 * data['booking_bool']
