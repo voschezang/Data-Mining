@@ -1,3 +1,15 @@
+from sklearn import linear_model
+import math
+import pycountry
+import requests
+import iso3166
+from phonenumbers.phonenumberutil import region_code_for_country_code
+import calendar
+from dateutil.parser import parse
+import pandas as pd
+import collections
+import numpy as np
+
 def calculate_DCG(rows):
     '''
     DCG = sum of all rows(gain / log2(rang in proposal lijst))
