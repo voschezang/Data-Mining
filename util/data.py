@@ -1,10 +1,5 @@
+import sklearn
 from sklearn import linear_model
-import math
-import pycountry
-import requests
-import iso3166
-from phonenumbers.phonenumberutil import region_code_for_country_code
-import calendar
 import pandas as pd
 import collections
 import numpy as np
@@ -100,3 +95,88 @@ def regress_booking(regData, fullK):
 def click_book_score(data):
     return (data['click_bool'] + 5 * data['booking_bool']
             ).transform(lambda x: min(x, 5))
+
+
+def cv_folds_for_sklearn(data: pd.DataFrame, n_cv_folds=5, resampling_ratio=1):
+    # Return "An iterable yielding (train, test) splits as arrays of indices"
+    # I.e. the arg for sklearn.model_selection.cross_val_score(_, cv=arg)
+    # :bco_splits = list of tuple of dataframes: (bookings, clicks, others)
+    ids = sklearn.utils.shuffle(data.srch_id.unique(), random_state=123)
+    ids_per_fold = np.array_split(ids, n_cv_folds)
+    data_splits = split_data_based_on_ids(data, ids_per_fold)
+    bco_splits = [split_bookings_clicks_others(split) for split in data_splits]
+    return cv_folds(bco_splits, resampling_ratio)
+
+
+def cv_folds(bco_splits, resampling_ratio):
+    # Return "An iterable yielding (train, test) splits as arrays of indices"
+    # I.e. the arg for sklearn.model_selection.cross_val_score(_, cv=arg)
+    # :bco_splits = list of tuple of dataframes: (bookings, clicks, others)
+    folds = resample_bco_splits(bco_splits, resampling_ratio)
+    # for each step, choose (n-1) train folds and 1 test fold
+    n_folds = len(folds)
+    cv_folds = []
+    for i in range(n_folds):
+        fold_indices = np.delete(np.arange(n_folds), i)
+        # select & concatenate folds[indices]
+        indices_train = combine_folds(folds, fold_indices)
+        indices_test = folds[i]
+        cv_folds.append((indices_train, indices_test))
+
+    return cv_folds
+
+
+def split_data_based_on_ids(data, ids_selections):
+    return [data.loc[data.srch_id.isin(
+        srch_ids)] for srch_ids in ids_selections]
+
+
+def split_bookings_clicks_others(data):
+    bookings = data.query('booking_bool == 1')
+    clicks = data.query('click_bool == 1 and booking_bool != 1')
+    others = data.query('click_bool != 1')
+
+    for i in bookings.index[:100]:
+        assert i not in clicks.index
+        assert i not in others.index
+    for i in clicks.index[:100]:
+        assert i not in bookings.index
+        assert i not in others.index
+
+    return bookings, clicks, others
+
+
+def sample(datasets=[], size_per_sample=100):
+    sample_indices = [np.random.choice(data.index, size_per_sample)
+                      for data in datasets
+                      ]
+    for i in range(len(sample_indices)):
+        for j in range(len(sample_indices)):
+            if i != j:
+                assert sample_indices[i][0] not in sample_indices[j]
+
+    return np.concatenate(sample_indices)
+
+
+def resample_bco_splits(bco_splits, ratio=1):
+    """ Returns a list of of folds, where each fold contains indices of bookings,
+    clicks, others
+
+    :bco_splits = list of tuple of dataframes: (bookings, clicks, others)
+    :ratio = float in [0,1] ratio of n_min ~ n_max. 0 means undersampling of the
+    largest class and 1 means oversampling of the smallest class
+    """
+    folds = []
+    for bco in bco_splits:
+        n_max = max([df.shape[0] for df in bco])
+        n_min = min([df.shape[0] for df in bco])
+        # interpolate
+        n = int(np.interp(ratio, [0, 1], [n_min, n_max]))
+        fold_indices = sample(bco, n)
+        folds.append(fold_indices)
+
+    return folds
+
+
+def combine_folds(folds, indices):
+    return np.concatenate([folds[i] for i in indices])
