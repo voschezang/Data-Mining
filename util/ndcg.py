@@ -113,7 +113,3 @@ def DCG_dict(data):
         dcg = dcg_at_k(r, r.size, method=0)
         DCG[id] = dcg
     return DCG
-
-def click_book_score(data):
-    return (data['click_bool'] + 5 * data['booking_bool']
-            ).transform(lambda x: min(x, 5))

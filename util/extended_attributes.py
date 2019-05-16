@@ -59,6 +59,7 @@ class ExtendAttributes(Estimator):
         avgPriceLevel = priceLevels.mean(axis=1)
         avgPriceLevel[avgPriceLevel.isna()] = 0
         data['avg_price_comp'] = avgPriceLevel
+        data.drop(columns=[keys], inplace=True)
 
         # additional attributes
         datetimes = pd.to_datetime(data['date_time'])

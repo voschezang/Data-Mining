@@ -1,16 +1,12 @@
-# from util.string import print_primary, print_secondary, print_warning
-# from util import string
 from sklearn import linear_model
 import math
 import pycountry
 import requests
 import iso3166
 from phonenumbers.phonenumberutil import region_code_for_country_code
-# from matplotlib import rcParams
 import calendar
 from dateutil.parser import parse
 import pandas as pd
-# from sklearn import preprocessing
 import collections
 import numpy as np
 
@@ -383,18 +379,6 @@ def long_lat_attr(data):
     data['latitude'] = lat
 
 
-def long_lat_attr(data):
-    country_id_numbers = data['prop_country_id']
-    countries_long_lat = country_coordinates(country_id_numbers)
-    lng = []
-    lat = []
-    for id in data['srch_id']:
-        if id in countries_long_lat:
-            lng.append(countries_long_lat[id][0])
-            lat.append(countries_long_lat[id][1])
-        else:
-            lng.append(np.nan)
-            lat.append(np.nan)
-
-    data['longitudal'] = lng
-    data['latitude'] = lat
+def click_book_score(data):
+    return (data['click_bool'] + 5 * data['booking_bool']
+            ).transform(lambda x: min(x, 5))
