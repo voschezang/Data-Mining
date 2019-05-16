@@ -1,43 +1,14 @@
-def calculate_DCG(rows):
-    '''
-    DCG = sum of all rows(gain / log2(rang in proposal lijst))
-    NDCG = (gain / log2) / iDCG
-    IDCG = ideal DCG = 3/log2 1 + 3/log2 2 + 3/log2 3
-
-    Gains:
-    5 - The user purchased a room at this hotel - booking bool true
-    1 - The user clicked through to see more information on this hotel - click bool true
-    0 - The user neither clicked on this hotel nor purchased a room at this hotel - both click and book not true
-    '''
-    DCG = 0
-    for row in rows.itertuples(index=True, name='Pandas'):
-        click_bool = getattr(row, 'click_bool')
-        position = getattr(row, 'position')
-        booking_bool = getattr(row, 'booking_bool')
-
-        if booking_bool != 1:
-            if position == 1:
-                DCG += click_bool / position + 5 * booking_bool / position
-            else:
-                DCG += click_bool / \
-                    math.log2(position) + 5 * booking_bool / \
-                    math.log2(position)
-        else:
-            if position == 1:
-                # perfect score
-                DCG += click_bool / position + 5 * booking_bool / position
-            else:
-                DCG += 5 * booking_bool / math.log2(position)
-    return DCG
-
-
-def rows_srch_id(data, id):
-    '''
-    Get all rows of a single search id
-    '''
-    rows = data.loc[data['srch_id'] == id]
-    return rows
-
+from sklearn import linear_model
+import math
+import pycountry
+import requests
+import iso3166
+from phonenumbers.phonenumberutil import region_code_for_country_code
+import calendar
+from dateutil.parser import parse
+import pandas as pd
+import collections
+import numpy as np
 
 def dcg_at_k(r, k, method=0):
     """Score is discounted cumulative gain (dcg)
@@ -64,28 +35,6 @@ def dcg_at_k(r, k, method=0):
             raise ValueError('method must be 0 or 1.')
     return 0.
 
-
-def ndcg_at_k(r, k, method=0):
-    """Score is normalized discounted cumulative gain (ndcg)
-    Relevance is positive real values.  Can use binary
-    as the previous methods.
-
-    Args:
-        r: Relevance scores (list or numpy) in rank order
-            (first element is the first item)
-        k: Number of results to consider
-        method: If 0 then weights are [1.0, 1.0, 0.6309, 0.5, 0.4307, ...]
-                If 1 then weights are [1.0, 0.6309, 0.5, 0.4307, ...]
-    Returns:
-        Normalized discounted cumulative gain
-    """
-    # https://gist.github.com/bwhite/3726239
-    dcg_max = dcg_at_k(sorted(r, reverse=True), k, method)
-    if not dcg_max:
-        return 0.
-    return dcg_at_k(r, k, method) / dcg_max
-
-
 def relevance_scores(rows):
     positions = rows['position']
     p_max = int(positions.max()) + 1
@@ -104,12 +53,104 @@ def relevance_scores(rows):
         #     r[position] = 1 * click_bool
     return r
 
-
 def DCG_dict(data):
     DCG = {}
     for id in data['srch_id'].unique():
-        rows = rows_srch_id(data, id)
-        r = relevance_scores(rows)
-        dcg = dcg_at_k(r, r.size, method=0)
+        # rows = rows_srch_id(data, id)
+        # r = relevance_scores(rows)
+        r = []
+        prev_srch_id = -1
+        position = 1
+        for i in data.index.tolist():
+            score = data.score 
+            row = data.loc[i]
+        # compute position
+            if prev_srch_id != row.srch_id:
+                prev_srch_id = row.srch_id
+                break
+            else:
+                r.append(score)
+                position += 1
+        dcg = dcg_at_k(r, len(r), method=0)
         DCG[id] = dcg
     return DCG
+
+# def DCG_dict(data):
+#     DCG = {}
+#     for id in data['srch_id'].unique():
+#         # rows = rows_srch_id(data, id)
+#         # r = relevance_scores(rows)
+#         prev_srch_id = -1
+#         position = 1
+#         for i in X_test.index.tolist():
+#             row = X_test.loc[i]
+#         # compute position
+#             if prev_srch_id != row.srch_id:
+#                 prev_srch_id = row.srch_id
+#                 break
+#             else:
+#                 r[position]
+#                 position += 1
+
+#         dcg = dcg_at_k(r, r.size, method=0)
+#         DCG[id] = dcg
+#     return DCG
+
+# def ndcg_at_k(r, k, method=0):
+#     """Score is normalized discounted cumulative gain (ndcg)
+#     Relevance is positive real values.  Can use binary
+#     as the previous methods.
+
+#     Args:
+#         r: Relevance scores (list or numpy) in rank order
+#             (first element is the first item)
+#         k: Number of results to consider
+#         method: If 0 then weights are [1.0, 1.0, 0.6309, 0.5, 0.4307, ...]
+#                 If 1 then weights are [1.0, 0.6309, 0.5, 0.4307, ...]
+#     Returns:
+#         Normalized discounted cumulative gain
+#     """
+#     # https://gist.github.com/bwhite/3726239
+#     dcg_max = dcg_at_k(sorted(r, reverse=True), k, method)
+#     if not dcg_max:
+#         return 0.
+#     return dcg_at_k(r, k, method) / dcg_max
+
+# def rows_srch_id(data, id):
+#     '''
+#     Get all rows of a single search id
+#     '''
+#     rows = data.loc[data['srch_id'] == id]
+#     return rows
+
+# def calculate_DCG(rows):
+#     '''
+#     DCG = sum of all rows(gain / log2(rang in proposal lijst))
+#     NDCG = (gain / log2) / iDCG
+#     IDCG = ideal DCG = 3/log2 1 + 3/log2 2 + 3/log2 3
+
+#     Gains:
+#     5 - The user purchased a room at this hotel - booking bool true
+#     1 - The user clicked through to see more information on this hotel - click bool true
+#     0 - The user neither clicked on this hotel nor purchased a room at this hotel - both click and book not true
+#     '''
+#     DCG = 0
+#     for row in rows.itertuples(index=True, name='Pandas'):
+#         click_bool = getattr(row, 'click_bool')
+#         position = getattr(row, 'position')
+#         booking_bool = getattr(row, 'booking_bool')
+
+#         if booking_bool != 1:
+#             if position == 1:
+#                 DCG += click_bool / position + 5 * booking_bool / position
+#             else:
+#                 DCG += click_bool / \
+#                     math.log2(position) + 5 * booking_bool / \
+#                     math.log2(position)
+#         else:
+#             if position == 1:
+#                 # perfect score
+#                 DCG += click_bool / position + 5 * booking_bool / position
+#             else:
+#                 DCG += 5 * booking_bool / math.log2(position)
+#     return DCG
