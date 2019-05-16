@@ -10,6 +10,7 @@ import pandas as pd
 import collections
 import numpy as np
 
+
 def dcg_at_k(r, k, method=0):
     """Score is discounted cumulative gain (dcg)
     Relevance is positive real values.  Can use binary
@@ -35,6 +36,7 @@ def dcg_at_k(r, k, method=0):
             raise ValueError('method must be 0 or 1.')
     return 0.
 
+
 def relevance_scores(rows):
     positions = rows['position']
     p_max = int(positions.max()) + 1
@@ -53,6 +55,7 @@ def relevance_scores(rows):
         #     r[position] = 1 * click_bool
     return r
 
+
 def DCG_dict(data):
     DCG = {}
     for id in data['srch_id'].unique():
@@ -62,7 +65,7 @@ def DCG_dict(data):
         prev_srch_id = -1
         position = 1
         for i in data.index.tolist():
-            score = data.score 
+            score = data.score
             row = data.loc[i]
         # compute position
             if prev_srch_id != row.srch_id:
