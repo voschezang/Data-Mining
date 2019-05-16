@@ -97,6 +97,40 @@ def click_book_score(data):
             ).transform(lambda x: min(x, 5))
 
 
+def to_df(x_test: pd.DataFrame, y_pred: np.ndarray):
+    # convert model prediction to df
+    y = x_test[['srch_id']].copy()
+    y['score'] = y_pred
+    return y
+
+
+def add_score(data: pd.DataFrame):
+    data['score'] = click_book_score(data)
+
+
+def add_position(data: pd.DataFrame):
+    ordered = data.sort_values(['srch_id', 'score'], ascending=[True, False])
+    data['position'] = pd.Series()
+    prev_srch_id = None
+    for i in ordered.index:
+        #         print(data.loc[i].srch_id, ordered.loc[i].srch_id)
+        # compute position, restart at each new srch_id
+        if prev_srch_id != data.loc[i].srch_id:
+            prev_srch_id = data.loc[i].srch_id
+            position = 1
+        else:
+            position += 1
+
+        # save value
+        data.loc[i, 'position'] = position
+
+
+def split_xy(data: pd.DataFrame, y_labels=['click_bool', 'booking_bool', 'score']):
+    # Return a tuple X,y
+    # of type pd.DataFrame, np.array (compatible with sklearn)
+    return data.drop(columns=y_labels), data['score'].values
+
+
 def cv_folds_for_sklearn(data: pd.DataFrame, n_cv_folds=5, resampling_ratio=1):
     # Return "An iterable yielding (train, test) splits as arrays of indices"
     # I.e. the arg for sklearn.model_selection.cross_val_score(_, cv=arg)
@@ -109,9 +143,11 @@ def cv_folds_for_sklearn(data: pd.DataFrame, n_cv_folds=5, resampling_ratio=1):
 
 
 def cv_folds(bco_splits, resampling_ratio):
-    # Return "An iterable yielding (train, test) splits as arrays of indices"
-    # I.e. the arg for sklearn.model_selection.cross_val_score(_, cv=arg)
-    # :bco_splits = list of tuple of dataframes: (bookings, clicks, others)
+    """ Return "An iterable yielding (train, test) splits as arrays of indices"
+    I.e. the arg for sklearn.model_selection.cross_val_score(_, cv=arg)
+
+    :bco_splits = list of tuple of dataframes: (bookings, clicks, others)
+    """
     folds = resample_bco_splits(bco_splits, resampling_ratio)
     # for each step, choose (n-1) train folds and 1 test fold
     n_folds = len(folds)
@@ -146,21 +182,8 @@ def split_bookings_clicks_others(data):
     return bookings, clicks, others
 
 
-def sample(datasets=[], size_per_sample=100):
-    sample_indices = [np.random.choice(data.index, size_per_sample)
-                      for data in datasets
-                      ]
-    for i in range(len(sample_indices)):
-        for j in range(len(sample_indices)):
-            if i != j:
-                assert sample_indices[i][0] not in sample_indices[j]
-
-    return np.concatenate(sample_indices)
-
-
 def resample_bco_splits(bco_splits, ratio=1):
-    """ Returns a list of of folds, where each fold contains indices of bookings,
-    clicks, others
+    """ Returns a list of of folds, where each fold contains indices
 
     :bco_splits = list of tuple of dataframes: (bookings, clicks, others)
     :ratio = float in [0,1] ratio of n_min ~ n_max. 0 means undersampling of the
@@ -172,10 +195,22 @@ def resample_bco_splits(bco_splits, ratio=1):
         n_min = min([df.shape[0] for df in bco])
         # interpolate
         n = int(np.interp(ratio, [0, 1], [n_min, n_max]))
-        fold_indices = sample(bco, n)
+        fold_indices = sample_bco(bco, n)
         folds.append(fold_indices)
 
     return folds
+
+
+def sample_bco(datasets=[], size_per_sample=100):
+    sample_indices = [np.random.choice(data.index, size_per_sample)
+                      for data in datasets
+                      ]
+    # for i in range(len(sample_indices)):
+    #     for j in range(len(sample_indices)):
+    #         if i != j:
+    #             assert sample_indices[i][0] not in sample_indices[j]
+    #
+    return np.concatenate(sample_indices)
 
 
 def combine_folds(folds, indices):
