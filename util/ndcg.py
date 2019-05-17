@@ -78,13 +78,13 @@ def DCG_dict(data):
     dcg = dcg_at_k(r, len(r), method=0)
     DCG[cur_srch_id] = dcg
     return DCG
-
-def rel_ndcg(X_test, X_test_control):
+    
+def ndcg(X_test, X_test_control):
     dcg_test = DCG_dict(X_test)
     dcg_control = DCG_dict(X_test_control)
-    rel_ndcg = np.mean(np.array(list(dcg_test.values()))/np.array(list(dcg_control.values())))
-    return rel_ndcg
-
+    ndcg = np.mean(np.array(list(dcg_test.values()))/np.array(list(dcg_control.values())))
+    return ndcg
+    
 # def dcg_at_k(r, k, method=0):
 #     """Score is discounted cumulative gain (dcg)
 #     Relevance is positive real values.  Can use binary

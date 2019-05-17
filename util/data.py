@@ -255,3 +255,8 @@ def sample_bco(datasets=[], size_per_sample=100):
 
 def combine_folds(folds, indices):
     return np.concatenate([folds[i] for i in indices])
+
+def sort_set(data):
+    # sort test set predicted scores from high scores to low scores
+    data = data.sort_values(['srch_id', 'score'], ascending=[True, False])
+    return data
