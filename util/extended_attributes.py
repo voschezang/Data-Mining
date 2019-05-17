@@ -84,6 +84,7 @@ class ExtendAttributes(Estimator):
         # print(data['travel_distance'])
 
     def fit(self, data):
+        data.drop(columns=['position'], inplace=True)
         # add score
         data['score'] = util.data.click_book_score(data)
 

@@ -20,10 +20,10 @@ def y_pred_multi(x_test: pd.DataFrame, y_preds=[], weights=[], **kwargs):
     assert y_preds.shape[0] == np.array(weights).size
     y_pred_mean = np.mean(
         [y_preds[i] * w for i, w in enumerate(weights)], axis=0)
-    return y_pred(x_test, y_pred_mean, **kwargs)
+    return Xy_pred(x_test, y_pred_mean, **kwargs)
 
 
-def y_pred(x_test: pd.DataFrame, y_pred: np.ndarray, save=False):
+def Xy_pred(x_test: pd.DataFrame, y_pred: np.ndarray, save=False):
     y = to_df(x_test, y_pred)
     y = y.sort_values(['srch_id', 'score'], ascending=[True, False])
     if save:
