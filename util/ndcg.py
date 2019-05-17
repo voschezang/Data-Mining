@@ -5,9 +5,11 @@ import pandas as pd
 
 def y_true(data_test: pd.DataFrame):
     # return ncdg of y_true
-    y_true = data_test[['srch_id', 'click_bool', 'booking_bool']].copy()
+    y_true = data_test[['srch_id', 'prop_id',
+                        'click_bool', 'booking_bool']].copy()
     util.data.add_score(y_true)
     util.data.add_position(y_true)
+    # return mean(util.data.y_true(data_test))
     return mean(y_true)
 
 
@@ -82,6 +84,7 @@ def ndcg(X_test, X_test_control):
     dcg_control = DCG_dict(X_test_control)
     ndcg = np.mean(np.array(list(dcg_test.values()))/np.array(list(dcg_control.values())))
     return ndcg
+    
 # def dcg_at_k(r, k, method=0):
 #     """Score is discounted cumulative gain (dcg)
 #     Relevance is positive real values.  Can use binary
