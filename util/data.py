@@ -245,16 +245,12 @@ def sample_bco(datasets=[], size_per_sample=100):
     sample_indices = [np.random.choice(data.index, size_per_sample)
                       for data in datasets
                       ]
-    # for i in range(len(sample_indices)):
-    #     for j in range(len(sample_indices)):
-    #         if i != j:
-    #             assert sample_indices[i][0] not in sample_indices[j]
-    #
     return np.concatenate(sample_indices)
 
 
 def combine_folds(folds, indices):
     return np.concatenate([folds[i] for i in indices])
+
 
 def sort_set(data):
     # sort test set predicted scores from high scores to low scores
