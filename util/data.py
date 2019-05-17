@@ -8,6 +8,29 @@ import numpy as np
 np.random.seed(123)
 
 
+# def y_true(data_test: pd.DataFrame):
+#     # return ncdg of y_true
+#     y_true = data_test[['srch_id', 'prop_id',
+#                         'click_bool', 'booking_bool']].copy()
+#     add_score(y_true)
+#     add_position(y_true)
+#     return y_true
+
+def y_pred(x_test: pd.DataFrame, y_pred: np.ndarray, save=False):
+    y = to_df(x_test, y_pred)
+    y = y.sort_values(['srch_id', 'score'], ascending=[True, False])
+    if save:
+        save_y_pred(y)
+    return y
+
+
+def save_y_pred(y_pred):
+    # assume y_pred is sorted
+    # .rename(columns={'srch_id': 'SearchId', 'prop_id': 'PropertyId'}, inplace=False)
+    y = y_pred[['srch_id', 'prop_id']]
+    y.to_csv('data/y_pred_result.csv', sep=',', index=False)
+
+
 def count_null_values(data, k):
     return data[k].isnull().sum()
 
@@ -99,7 +122,7 @@ def click_book_score(data):
 
 def to_df(x_test: pd.DataFrame, y_pred: np.ndarray):
     # convert model prediction to df
-    y = x_test[['srch_id']].copy()
+    y = x_test[['srch_id', 'prop_id']].copy()
     y['score'] = y_pred
     return y
 
@@ -125,10 +148,15 @@ def add_position(data: pd.DataFrame):
         data.loc[i, 'position'] = position
 
 
-def split_xy(data: pd.DataFrame, y_labels=['click_bool', 'booking_bool', 'score']):
+def split_xy(data: pd.DataFrame,
+             y_labels=['click_bool', 'booking_bool', 'score'], selection=None):
     # Return a tuple X,y
     # of type pd.DataFrame, np.array (compatible with sklearn)
-    return data.drop(columns=y_labels), data['score'].values
+    x = data.drop(columns=y_labels)
+    y = data['score'].values
+    if selection is not None:
+        return x.loc[selection], y[selection]
+    return x, y
 
 
 def cv_folds_for_sklearn(data: pd.DataFrame, n_cv_folds=5, resampling_ratio=1):
@@ -153,10 +181,14 @@ def cv_folds(bco_splits, resampling_ratio):
     n_folds = len(folds)
     cv_folds = []
     for i in range(n_folds):
-        fold_indices = np.delete(np.arange(n_folds), i)
-        # select & concatenate folds[indices]
-        indices_train = combine_folds(folds, fold_indices)
-        indices_test = folds[i]
+        if n_folds > 1:
+            fold_indices = np.delete(np.arange(n_folds), i)
+            # select & concatenate folds[indices]
+            indices_train = combine_folds(folds, fold_indices)
+            indices_test = folds[i]
+        else:
+            indices_train = folds[i]
+            indices_test = []
         cv_folds.append((indices_train, indices_test))
 
     return cv_folds
@@ -184,6 +216,7 @@ def split_bookings_clicks_others(data):
 
 def resample_bco_splits(bco_splits, ratio=1):
     """ Returns a list of of folds, where each fold contains indices
+    Ratio determines the amount of over/under sampling.
 
     :bco_splits = list of tuple of dataframes: (bookings, clicks, others)
     :ratio = float in [0,1] ratio of n_min ~ n_max. 0 means undersampling of the

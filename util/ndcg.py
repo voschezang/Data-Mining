@@ -5,9 +5,11 @@ import pandas as pd
 
 def y_true(data_test: pd.DataFrame):
     # return ncdg of y_true
-    y_true = data_test[['srch_id', 'click_bool', 'booking_bool']].copy()
+    y_true = data_test[['srch_id', 'prop_id',
+                        'click_bool', 'booking_bool']].copy()
     util.data.add_score(y_true)
     util.data.add_position(y_true)
+    # return mean(util.data.y_true(data_test))
     return mean(y_true)
 
 
