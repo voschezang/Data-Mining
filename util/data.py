@@ -73,6 +73,7 @@ def scores_df(data, user_func=None, item_func=None):
     user_func :: (pd.Series, int) -> int
     item_func :: (pd.Series, int) -> int
     """
+    # TODO use clusters
     scores = {'item': [], 'user': [], 'score': []}
     for i in range(data.shape[0]):
         row = data.iloc[i]
