@@ -6,6 +6,8 @@ def ndcg(x_test, y_test, y_pred):
     # calculate dcg of test set per srch_id
     Xy_pred = util.data.Xy_pred(x_test, y_pred)
     # put true y values on indexes, do not sort !
+    Xy_pred['score'] = y_test
+    # calculate ideal dcg of test set per srch_id
     Xy_true = util.data.Xy_pred(x_test, y_test)
     return ndcg_helper(Xy_pred, Xy_true)
 
