@@ -1,27 +1,21 @@
 import numpy as np
 import util.data
-import pandas as pd
 
 
-def y_true(data_test: pd.DataFrame):
-    # return ncdg of y_true
-    y_true = data_test[['srch_id', 'prop_id',
-                        'click_bool', 'booking_bool']].copy()
-    util.data.add_score(y_true)
-    util.data.add_position(y_true)
-    # return mean(util.data.y_true(data_test))
-    return mean(y_true)
+def ndcg(x_test, y_test, y_pred):
+    # calculate dcg of test set per srch_id
+    Xy_pred = util.data.Xy_pred(x_test, y_pred)
+    # put true y values on indexes, do not sort !
+    Xy_true = util.data.Xy_pred(x_test, y_test)
+    return ndcg_helper(Xy_pred, Xy_true)
 
 
-def y_pred(x_test: pd.DataFrame, y_pred: np.ndarray):
-    # return ncdg of the model prediction `y_pred`
-    y = util.data.to_df(x_test, y_pred)
-    util.data.add_position(y)
-    return mean(y)
-
-
-def mean(data):
-    return np.mean(list(util.ndcg.DCG_dict(data).values()))
+def ndcg_helper(X_test, X_test_control):
+    dcg_test = DCG_dict(X_test)
+    dcg_control = DCG_dict(X_test_control)
+    ndcg = np.mean(np.array(list(dcg_test.values()))
+                   / np.array(list(dcg_control.values())))
+    return ndcg
 
 
 def dcg_at_k(r, k, method=0):
@@ -80,11 +74,3 @@ def DCG_dict(data):
     dcg = dcg_at_k(r, len(r), method=0)
     DCG[cur_srch_id] = dcg
     return DCG
-
-
-def ndcg(X_test, X_test_control):
-    dcg_test = DCG_dict(X_test)
-    dcg_control = DCG_dict(X_test_control)
-    ndcg = np.mean(np.array(list(dcg_test.values())) /
-                   np.array(list(dcg_control.values())))
-    return ndcg
