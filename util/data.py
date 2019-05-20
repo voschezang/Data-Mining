@@ -3,18 +3,8 @@ from sklearn import linear_model
 import pandas as pd
 import collections
 import numpy as np
-
-
 np.random.seed(123)
 
-
-# def y_true(data_test: pd.DataFrame):
-#     # return ncdg of y_true
-#     y_true = data_test[['srch_id', 'prop_id',
-#                         'click_bool', 'booking_bool']].copy()
-#     add_score(y_true)
-#     add_position(y_true)
-#     return y_true
 
 def y_pred_multi(x_test: pd.DataFrame, y_preds=[], weights=[], **kwargs):
     assert y_preds.shape[0] == np.array(weights).size
@@ -36,6 +26,18 @@ def save_y_pred(y_pred):
     # .rename(columns={'srch_id': 'SearchId', 'prop_id': 'PropertyId'}, inplace=False)
     y = y_pred[['srch_id', 'prop_id']]
     y.to_csv('data/y_pred_result.csv', sep=',', index=False)
+
+
+def rm_na(data: pd.DataFrame):
+    try:
+        data.drop(columns=['position'], inplace=True)
+    except KeyError:
+        pass
+
+    for k in data.columns:
+        if data[k].isna().sum() > 0:
+            #         print('rm %0.4f' % (data_all[k].isna().sum() / data_all.shape[0]), k)
+            data.drop(columns=[k], inplace=True)
 
 
 def count_null_values(data, k):

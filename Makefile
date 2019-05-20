@@ -4,6 +4,9 @@ default:
 clean:
 	python3 clean_data.py
 
+clean2:
+	python3 clean_data_2.py
+
 cf-matrix:
 	python3 build_cf_matrix.py
 
