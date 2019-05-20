@@ -16,7 +16,7 @@ USER_KEY_PREFIX = 'cluster_id_users_'
 ITEM_KEY_PREFIX = 'cluster_id_items_'
 
 
-def init(data, n_clusters=10):
+def init(data, n_clusters=50):
     assert data.shape[0] > 10 * n_clusters
     # split columns into srch and prop
     # rm irrelevant info
@@ -34,13 +34,13 @@ def init(data, n_clusters=10):
     assert [k in data.columns for k in keys_property]
     assert [k in data.columns for k in keys_search]
     models_user = {'KMeans': sklearn.cluster.KMeans(n_clusters, n_jobs=2, random_state=seed),
-                   'FeatureAgglomeration': FeatureAgglomeration(n_clusters),
-                   # 'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
+                   'FeatureAgglomeration': FeatureAgglomeration(n_clusters=24),
+                   'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
                    }
 
     models_item = {'KMeans': sklearn.cluster.KMeans(n_clusters, n_jobs=2, random_state=seed),
-                   'FeatureAgglomeration': FeatureAgglomeration(n_clusters),
-                   # 'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
+                   'FeatureAgglomeration': FeatureAgglomeration(n_clusters=24),
+                   'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
                    }
     return keys_search, keys_property, models_user, models_item
 
