@@ -17,8 +17,8 @@ import util.data
 import numpy as np
 np.random.seed(123)
 
-# data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
-data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100 * 1000)
+data = pd.read_csv('data/training_set_VU_DM.csv', sep=',')
+# data = pd.read_csv('data/training_set_VU_DM.csv', sep=',', nrows=100 * 1000)
 # data = data.to_sparse(fill_value=0)
 
 columns = list(data.columns)
@@ -132,8 +132,8 @@ gc.collect()
 
 # Transfrom test data
 print_primary('\n\n ----- \n Transform test data \n ---- \n\n')
-# data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',')
-data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',', nrows=1000 * 1000)
+data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',')
+# data_test = pd.read_csv('data/test_set_VU_DM.csv', sep=',', nrows=1000 * 1000)
 
 pipeline.transform(data_test)
 # data_test.to_csv('data/test_set_VU_DM_clean.csv', sep=';', index=False)

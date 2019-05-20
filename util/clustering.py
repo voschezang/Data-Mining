@@ -32,12 +32,12 @@ def init(data, n_clusters=10):
 
     models_user = {'KMeans': sklearn.cluster.KMeans(n_clusters, n_jobs=2, random_state=seed),
                    'FeatureAgglomeration': FeatureAgglomeration(n_clusters),
-                   'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
+                   # 'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
                    }
 
     models_item = {'KMeans': sklearn.cluster.KMeans(n_clusters, n_jobs=2, random_state=seed),
-                   'FeatureAgglomeration': FeatureAgglomeration(n_clusters),
-                   'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
+                   # 'FeatureAgglomeration': FeatureAgglomeration(n_clusters),
+                   # 'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
                    }
     return keys_search, keys_property, models_user, models_item
 
@@ -49,61 +49,60 @@ def init_df_columns(data, models_user, models_item):
         data[ITEM_KEY_PREFIX + k] = np.nan
 
 
-def train(data, keys_search, keys_property, models_user, models_item):
-    # train user model
-    print('train user model')
-    x_train_users = sample(data, keys_search, k='srch_id')
-    for k, model in models_user.items():
-        print('\t%s' % k)
-        model.fit(x_train_users)
-        indices = list(data.index)
-        data.loc[indices, USER_KEY_PREFIX +
-                 k] = model.predict(data.loc[indices, keys_search])
-        # print(data.shape, data[keys_search].shape, list(data.index).shape)
-        # print(model.predict(data[keys_search].shape))
+# def train(data, keys_search, keys_property, models_user, models_item):
+    # # train user model
+    # print('train user model')
+    # train_models(data, models_user, keys_search, 'srch_id', USER_KEY_PREFIX)
+    # # train item model
+    # print('train item model')
+    # train_models(data, models_item, keys_property, 'prop_id', ITEM_KEY_PREFIX)
+
+
+def fit(data, models, keys, k):
+    x_train = sample_and_shuffle(data, keys, k=k)
+    for k, model in models.items():
+        model.fit(x_train)
+        # indices = data.index
+        # y_pred = model.predict(data.loc[indices, keys])
+        # assert data.loc[indices].shape[0] == y_pred.shape[0]
+        # # this line will print a SettingWithCopyWarning
+        # key = prefix + k
+        # data.loc[indices, key] = y_pred
+        # # prediction_keys .append(key)
         #
-        # data.loc[list(data.index), USER_KEY_PREFIX
-        #          + k] = model.predict(data[keys_search])
+        # # data.loc[indices, prefix + k] = 1
+        # # data.loc(axis=0)[0, prefix + k] = 2
+        # # for i in indices:
+        # # data.loc[indices[i], prefix  + k] = y_pred[i]
 
-    # clear memory
-    x_train_users = None
-    gc.collect()
-
-    # train item model
-    print('train item model')
-    x_train_items = sample(data, keys_property, k='prop_id')
-    for k, model in models_item.items():
-        print('\t%s' % k)
-        model.fit(x_train_items)
-        # data[ITEM_KEY_PREFIX + k] = model.predict(data[keys_property])
-        # print(data.iloc[0][ITEM_KEY_PREFIX + k])
-        print('shape', data[ITEM_KEY_PREFIX + k].isna().shape)
-        # TODO return df?
-
-    # TODO
-    # data.to_csv('data/training_set_VU_DM_clean.csv', sep=';', index=False)
-    # clear memory
-    x_train_items = None
-    data = None
-    gc.collect()
+    # assert not data[prefix + k].isna().all()
+    # return data[prediction_keys]
 
 
-def transform(data, keys_search, keys_property, models_user, models_item):
-    print('predict users')
-    for k, model in models_user.items():
-        print('\t%s' % k)
-        data.loc[:, USER_KEY_PREFIX + k] = model.predict(data[keys_search])
+def predict(data, models, keys, k, prefix):
+    indices = data.index
+    prediction_keys = []
+    for k, model in models.items():
+        print('\t%s (k: `%s`)' % (k, prefix + k))
+        y_pred = model.predict(data[keys])
+        key = prefix + k
+        data.loc[indices, key] = y_pred
+        prediction_keys.append(key)
+    return data[prediction_keys]
 
-    print('predict items')
-    for k, model in models_item.items():
-        print('\t%s' % k)
-        data.loc[:, ITEM_KEY_PREFIX +
-                 k] = model.predict(data[keys_property])
+    # print('predict items')
+    # for k, model in models_item.items():
+    #     print('\t%s' % k)
+    #     # data.loc[:, ITEM_KEY_PREFIX + k] = model.predict(data[keys_property])
+    #     y_pred = model.predict(data[keys_property])
+    #     data.loc[indices, key] = y_pred
+    #     # for i in indices:
+    #     # data.loc[indices[i], ITEM_KEY_PREFIX + k] = y_pred[i]
 
 
 def extract_data(data, keys, k='srch_id'):
     # select unique rows, based on keys
-    print('extract_data(k: %s)' % k)
+    print('\textract_data(k: %s)' % k)
     data = data[keys + [k]]
     data_unique_rows = data.drop_duplicates(subset=k)
     assert data_unique_rows.shape[0] == data[k].unique().size, \
@@ -117,7 +116,7 @@ def extract_data(data, keys, k='srch_id'):
     return data_unique_rows[keys]
 
 
-def sample(data, keys, k='srch_id', rm_first_column=True):
+def sample_and_shuffle(data, keys, k='srch_id', rm_first_column=True):
     # sample & shuffle
     data_unique_rows = extract_data(data, keys, k)
     sample = data_unique_rows.sample(frac=1, random_state=seed)
