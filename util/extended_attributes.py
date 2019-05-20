@@ -59,7 +59,7 @@ class ExtendAttributes(Estimator):
         avgPriceLevel = priceLevels.mean(axis=1)
         avgPriceLevel[avgPriceLevel.isna()] = 0
         data['avg_price_comp'] = avgPriceLevel
-        data.drop(columns=[keys], inplace=True)
+        # data.drop(columns=[keys], inplace=True)
 
         # additional attributes
         datetimes = pd.to_datetime(data['date_time'])
@@ -85,8 +85,16 @@ class ExtendAttributes(Estimator):
 
     def fit(self, data):
         data.drop(columns=['position'], inplace=True)
-        # add score
         data['score'] = util.data.click_book_score(data)
+        # ignored keys will be imputed later
+        keys_to_be_imputed = [ExtendedAttributes.delta_starrating,
+                              ExtendedAttributes.srch_person_per_room_score,
+                              ExtendedAttributes.visitor_hist_adr_usd_log,
+                              ExtendedAttributes.price_usd_log,
+                              'visitor_hist_starrating',
+                              'orig_destination_distance'
+                              ] + [k for k in data.columns if 'score' in k or 'usd' in k]
+        util.data.rm_na(data, ignore=keys_to_be_imputed)
 
     def transform(self, data):
         pass

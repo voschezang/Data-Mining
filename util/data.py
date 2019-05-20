@@ -1,16 +1,32 @@
 import sklearn
 from sklearn import linear_model
+import sklearn.model_selection
 import pandas as pd
 import collections
 import numpy as np
 np.random.seed(123)
 
 
-def y_pred_multi(x_test: pd.DataFrame, y_preds=[], weights=[], **kwargs):
-    assert y_preds.shape[0] == np.array(weights).size
-    y_pred_mean = np.mean(
-        [y_preds[i] * w for i, w in enumerate(weights)], axis=0)
-    return Xy_pred(x_test, y_pred_mean, **kwargs)
+def train_test_split(data_all):
+    # split train/test sets based on unique ids
+    # set aside some labelled data for testing (based on srch_id)
+    ids = data_all.srch_id.unique()
+    ids_train, ids_test = sklearn.model_selection.train_test_split(
+        ids, test_size=0.5, random_state=123)
+    data_train = data_all[data_all.srch_id.isin(ids_train)]
+    data_test = data_all[data_all.srch_id.isin(ids_test)]
+    return data_train, data_test
+
+
+def split_xy(data: pd.DataFrame,
+             y_labels=['click_bool', 'booking_bool', 'score'], selection=None):
+    # Return a tuple X,y
+    # of type pd.DataFrame, np.array (compatible with sklearn)
+    x = data.drop(columns=y_labels)
+    y = data['score'].values
+    if selection is not None:
+        return x.loc[selection], y[selection]
+    return x, y
 
 
 def Xy_pred(x_test: pd.DataFrame, y_pred: np.ndarray, save=False):
@@ -28,14 +44,21 @@ def save_y_pred(y_pred):
     y.to_csv('data/y_pred_result.csv', sep=',', index=False)
 
 
-def rm_na(data: pd.DataFrame):
+def y_pred_multi(x_test: pd.DataFrame, y_preds=[], weights=[], **kwargs):
+    assert y_preds.shape[0] == np.array(weights).size
+    y_pred_mean = np.mean(
+        [y_preds[i] * w for i, w in enumerate(weights)], axis=0)
+    return Xy_pred(x_test, y_pred_mean, **kwargs)
+
+
+def rm_na(data: pd.DataFrame, ignore=[]):
     try:
         data.drop(columns=['position'], inplace=True)
     except KeyError:
         pass
 
     for k in data.columns:
-        if data[k].isna().sum() > 0:
+        if k not in ignore and data[k].isna().any():
             #         print('rm %0.4f' % (data_all[k].isna().sum() / data_all.shape[0]), k)
             data.drop(columns=[k], inplace=True)
 
@@ -66,29 +89,20 @@ def join_inplace(data: pd.DataFrame, rows: np.ndarray, original_k: str, k_suffix
         join_inplace(data, rows.toarray(), original_k, k_suffix)
 
 
-def scores_df(data, user_func=None, item_func=None):
+def scores_df(data, k_user, k_item):
     """ Convert `data` to a format suitable for the the surprise lib
     Surprise requires the order item-user-score
     user corresponds to search_id (i.e. a person), item to property id
-
-    user_func and item_func can be used to transform (group) user/item ids
-    user_func :: (pd.Series, int) -> int
-    item_func :: (pd.Series, int) -> int
     """
-    # TODO use clusters
     scores = {'item': [], 'user': [], 'score': []}
-    for i in range(data.shape[0]):
-        row = data.iloc[i]
-        user_id = row.srch_id
-        item_id = row.prop_id
-        if user_func:
-            user_id = user_func(row, user_id)
-        if item_func:
-            item_id = item_func(row, item_id)
-
-        scores['user'].append(user_id)
-        scores['item'].append(item_id)
-        scores['score'].append(row.score)
+    assert k_user in data.columns
+    assert k_item in data.columns
+    # do not use .index,  because .loc may return multiple results
+    for _, row in data.iterrows():
+        print(row[k_user])
+        scores['user'].append(row[k_user])
+        scores['item'].append(row[k_item])
+        scores['score'].append(row['score'])
     return pd.DataFrame(scores)
 
 
@@ -158,19 +172,8 @@ def add_position(data: pd.DataFrame):
         data.loc[i, 'position'] = position
 
 
-def split_xy(data: pd.DataFrame,
-             y_labels=['click_bool', 'booking_bool', 'score'], selection=None):
-    # Return a tuple X,y
-    # of type pd.DataFrame, np.array (compatible with sklearn)
-    x = data.drop(columns=y_labels)
-    y = data['score'].values
-    if selection is not None:
-        return x.loc[selection], y[selection]
-    return x, y
-
-
 def cv_folds_for_sklearn(data: pd.DataFrame, n_cv_folds=5, resampling_ratio=1):
-    # Return "An iterable yielding (train, test) splits as arrays of indices"
+    # Return "An iterable yielding (i_train, i_test) splits as arrays of indices"
     # I.e. the arg for sklearn.model_selection.cross_val_score(_, cv=arg)
     # :bco_splits = list of tuple of dataframes: (bookings, clicks, others)
     ids = sklearn.utils.shuffle(data.srch_id.unique(), random_state=123)
@@ -214,10 +217,10 @@ def split_bookings_clicks_others(data):
     clicks = data.query('click_bool == 1 and booking_bool != 1')
     others = data.query('click_bool != 1')
 
-    for i in bookings.index[:100]:
+    for i in bookings.index[: 100]:
         assert i not in clicks.index
         assert i not in others.index
-    for i in clicks.index[:100]:
+    for i in clicks.index[: 100]:
         assert i not in bookings.index
         assert i not in others.index
 

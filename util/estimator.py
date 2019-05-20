@@ -100,10 +100,13 @@ class Discretizer(Estimator):
             print('\tAttribute & Number of bins (categories)')
         else:
             print('\tAttribute & Bin start & Bin 1 & Bin 2 \\\\')
-            s = ''
-            for st in [round(a, 3) for a in self.est.bin_edges_[0]]:
-                s += '$%s$ & ' % str(st)
+        s = ''
+        for st in [round(a, 3) for a in self.est.bin_edges_[0]]:
+            s += '$%s$ & ' % str(st)
+        if s:
             print('\t%s & %s' % (self.k, s[:-2]))
+        else:
+            print('\t\t no bins')
 
         # note the sparse output
         rows = self.est.transform(data[self.k].values.reshape(-1, 1))

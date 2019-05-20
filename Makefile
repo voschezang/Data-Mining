@@ -2,6 +2,10 @@ default:
 	jupyter notebook
 
 clean:
+	python3 clean_data.py > clean_data.txt
+	cat clean_data.txt
+
+clean-no-save:
 	python3 clean_data.py
 
 clean2:

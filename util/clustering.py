@@ -1,16 +1,19 @@
+import numpy as np
+import sklearn
+import sklearn.ensemble
 import gc
 import sklearn.cluster
 import sklearn.metrics
+import pandas as pd
 import sklearn.neighbors
 import sklearn.linear_model
 import sklearn.tree
 import sklearn.svm
-import sklearn.ensemble
-import sklearn
-import numpy as np
-from util import clustering
 seed = 123
 np.random.seed(seed)
+
+USER_KEY_PREFIX = 'cluster_id_users_'
+ITEM_KEY_PREFIX = 'cluster_id_items_'
 
 
 def init(data, n_clusters=10):
@@ -28,25 +31,55 @@ def init(data, n_clusters=10):
                    and 'cluster' not in k]
 
     models_user = {'KMeans': sklearn.cluster.KMeans(n_clusters, n_jobs=2, random_state=seed),
-                   'FeatureAgglomeration': clustering.FeatureAgglomeration(n_clusters),
+                   'FeatureAgglomeration': FeatureAgglomeration(n_clusters),
                    'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
                    }
 
     models_item = {'KMeans': sklearn.cluster.KMeans(n_clusters, n_jobs=2, random_state=seed),
-                   'FeatureAgglomeration': clustering.FeatureAgglomeration(n_clusters),
+                   'FeatureAgglomeration': FeatureAgglomeration(n_clusters),
                    'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
                    }
     return keys_search, keys_property, models_user, models_item
 
 
+def init_df_columns(data, models_user, models_item):
+    for k in models_user.keys():
+        data[USER_KEY_PREFIX + k] = np.nan
+    for k in models_item.keys():
+        data[ITEM_KEY_PREFIX + k] = np.nan
+
+
 def train(data, keys_search, keys_property, models_user, models_item):
+    # train user model
+    print('train user model')
+    x_train_users = sample(data, keys_search, k='srch_id')
+    for k, model in models_user.items():
+        print('\t%s' % k)
+        model.fit(x_train_users)
+        indices = list(data.index)
+        data.loc[indices, USER_KEY_PREFIX +
+                 k] = model.predict(data.loc[indices, keys_search])
+        # print(data.shape, data[keys_search].shape, list(data.index).shape)
+        # print(model.predict(data[keys_search].shape))
+        #
+        # data.loc[list(data.index), USER_KEY_PREFIX
+        #          + k] = model.predict(data[keys_search])
+
+    # clear memory
+    x_train_users = None
+    gc.collect()
+
     # train item model
     print('train item model')
-    x_train_items = clustering.sample(data, keys_property, k='prop_id')
+    x_train_items = sample(data, keys_property, k='prop_id')
     for k, model in models_item.items():
         print('\t%s' % k)
         model.fit(x_train_items)
-        data['cluster_id_items_' + k] = model.predict(data[keys_property])
+        # data[ITEM_KEY_PREFIX + k] = model.predict(data[keys_property])
+        # print(data.iloc[0][ITEM_KEY_PREFIX + k])
+        print('shape', data[ITEM_KEY_PREFIX + k].isna().shape)
+        # TODO return df?
+
     # TODO
     # data.to_csv('data/training_set_VU_DM_clean.csv', sep=';', index=False)
     # clear memory
@@ -59,16 +92,18 @@ def transform(data, keys_search, keys_property, models_user, models_item):
     print('predict users')
     for k, model in models_user.items():
         print('\t%s' % k)
-        data['cluster_id_users_' + k] = model.predict(data[keys_search])
+        data.loc[:, USER_KEY_PREFIX + k] = model.predict(data[keys_search])
 
     print('predict items')
     for k, model in models_item.items():
         print('\t%s' % k)
-        data['cluster_id_items_' + k] = model.predict(data[keys_property])
+        data.loc[:, ITEM_KEY_PREFIX +
+                 k] = model.predict(data[keys_property])
 
 
 def extract_data(data, keys, k='srch_id'):
     # select unique rows, based on keys
+    print('extract_data(k: %s)' % k)
     data = data[keys + [k]]
     data_unique_rows = data.drop_duplicates(subset=k)
     assert data_unique_rows.shape[0] == data[k].unique().size, \

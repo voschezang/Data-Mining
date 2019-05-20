@@ -1,0 +1,168 @@
+33 remaining attrs
+[32m
+ ----- 
+ Fit estimator models on training data 
+ ---- 
+[0m
+<util.extended_attributes.ExtendAttributes object at 0x10b745048> None
+<util.estimator.Wrapper object at 0x11b7af898> srch_person_per_room_score
+<util.estimator.Wrapper object at 0x1a1f321550> srch_person_per_room_score
+<util.estimator.Wrapper object at 0x11a0d0828> srch_adults_per_room_score
+<util.estimator.Wrapper object at 0x11b8baa90> delta_starrating
+<util.estimator.Wrapper object at 0x1a24b6ddd8> delta_starrating
+<util.estimator.Wrapper object at 0x1a24b6de80> visitor_hist_adr_usd_log
+<util.estimator.Wrapper object at 0x1a2507ca58> visitor_hist_adr_usd_log
+<util.estimator.Wrapper object at 0x1a2507ce10> price_usd_log
+<util.estimator.Wrapper object at 0x1a25089588> price_usd_log
+<util.estimator.LabelBinarizer object at 0x1a250895c0> weekday
+[32m
+OneHotEncode labels `weekday`[0m
+	Labels: ['Wednesday', 'Monday', 'Thursday', 'Tuesday', 'Other']
+<util.estimator.RemoveKey object at 0x1a250895f8> weekday
+	k removed weekday
+<util.estimator.LabelBinarizer object at 0x1a25089668> site_id
+[32m
+OneHotEncode labels `site_id`[0m
+	Labels: [5, 14, 15, 1e+16]
+<util.estimator.RemoveKey object at 0x1a250896a0> site_id
+	k removed site_id
+<util.estimator.LabelBinarizer object at 0x1a250896d8> visitor_location_country_id
+[32m
+OneHotEncode labels `visitor_location_country_id`[0m
+	Labels: [219, 100, 55, 1e+16]
+<util.estimator.RemoveKey object at 0x1a25089710> visitor_location_country_id
+	k removed visitor_location_country_id
+<util.estimator.LabelBinarizer object at 0x1a25089748> prop_country_id
+[32m
+OneHotEncode labels `prop_country_id`[0m
+	Labels: [219, 100, 55, 1e+16]
+<util.estimator.RemoveKey object at 0x1a25089780> prop_country_id
+	k removed prop_country_id
+<util.estimator.LabelBinarizer object at 0x1a250897b8> srch_destination_id
+[32m
+OneHotEncode labels `srch_destination_id`[0m
+	Labels: [8192, 4562, 9402, 1e+16]
+<util.estimator.RemoveKey object at 0x1a250897f0> srch_destination_id
+	k removed srch_destination_id
+<util.estimator.Wrapper object at 0x1a25089860> prop_starrating
+<util.estimator.LabelBinarizer object at 0x1a25089898> prop_starrating
+[32m
+OneHotEncode labels `prop_starrating`[0m
+	Labels: [3, 4, 2, 1e+16]
+<util.estimator.RemoveKey object at 0x1a250898d0> prop_starrating
+	k removed prop_starrating
+<util.estimator.Wrapper object at 0x1a25089940> visitor_hist_starrating
+<util.estimator.Wrapper object at 0x1a250899b0> visitor_hist_starrating
+<util.estimator.Wrapper object at 0x1a25089a20> prop_review_score
+<util.estimator.Wrapper object at 0x1a25089a90> prop_review_score
+<util.estimator.Wrapper object at 0x1a25089b00> prop_location_score1
+<util.estimator.Wrapper object at 0x1a25089b70> prop_location_score1
+<util.estimator.Wrapper object at 0x1a25089be0> prop_location_score2
+<util.estimator.Wrapper object at 0x1a25089c50> prop_location_score2
+<util.estimator.Wrapper object at 0x1a25089cc0> srch_query_affinity_score
+<util.estimator.Wrapper object at 0x1a25089d30> srch_query_affinity_score
+<util.estimator.Wrapper object at 0x1a25089da0> srch_adults_count
+<util.estimator.Discretizer object at 0x1a25089dd8> srch_adults_count
+[32m	dicretize `srch_adults_count`[0m
+	Discretize (bin) strategy: uniform & n bins: 3 \\
+	Attribute & Number of bins (categories)
+<util.estimator.Wrapper object at 0x1a25089e48> srch_adults_count
+<util.estimator.Wrapper object at 0x1a25089eb8> srch_children_count
+<util.estimator.Discretizer object at 0x1a25089ef0> srch_children_count
+[32m	dicretize `srch_children_count`[0m
+	Discretize (bin) strategy: uniform & n bins: 3 \\
+	Attribute & Number of bins (categories)
+<util.estimator.Wrapper object at 0x1a25089f60> srch_children_count
+<util.estimator.Wrapper object at 0x1a25089fd0> srch_room_count
+<util.estimator.Discretizer object at 0x1a29c90048> srch_room_count
+[32m	dicretize `srch_room_count`[0m
+	Discretize (bin) strategy: uniform & n bins: 3 \\
+	Attribute & Number of bins (categories)
+<util.estimator.Wrapper object at 0x1a29c900b8> srch_room_count
+<util.estimator.Wrapper object at 0x1a29c90128> srch_length_of_stay
+<util.estimator.Discretizer object at 0x1a29c90160> srch_length_of_stay
+[32m	dicretize `srch_length_of_stay`[0m
+	Discretize (bin) strategy: uniform & n bins: 3 \\
+	Attribute & Number of bins (categories)
+<util.estimator.Wrapper object at 0x1a29c901d0> srch_length_of_stay
+<util.estimator.Wrapper object at 0x1a29c90240> srch_booking_window
+<util.estimator.Discretizer object at 0x1a29c90278> srch_booking_window
+[32m	dicretize `srch_booking_window`[0m
+	Discretize (bin) strategy: uniform & n bins: 3 \\
+	Attribute & Number of bins (categories)
+<util.estimator.Wrapper object at 0x1a29c902e8> srch_booking_window
+<util.estimator.Wrapper object at 0x1a29c90358> promotion_flag
+<util.estimator.Wrapper object at 0x1a29c90390> prop_log_historical_price
+<util.estimator.Wrapper object at 0x1a29c90400> prop_log_historical_price
+<util.estimator.Wrapper object at 0x1a29c90470> orig_destination_distance
+<util.estimator.Discretizer object at 0x1a29c904a8> orig_destination_distance
+[32m	dicretize `orig_destination_distance`[0m
+	Discretize (bin) strategy: quantile & n bins: 3 \\
+	Attribute & Bin start & Bin 1 & Bin 2 \\
+	orig_destination_distance & $0.01$ & $366.35$ & $397.84$ & $11631.95$ 
+<util.estimator.Wrapper object at 0x1a29c90518> orig_destination_distance
+<util.estimator.GrossBooking object at 0x1a29c90550> gross_bookings_usd
+[34m	GrossBooking fit[0m
+[34m	GrossBooking transform[0m
+<util.estimator.Wrapper object at 0x1a29c905f8> visitor_hist_adr_usd
+<util.estimator.Discretizer object at 0x1a29c90630> visitor_hist_adr_usd
+[32m	dicretize `visitor_hist_adr_usd`[0m
+	Discretize (bin) strategy: quantile & n bins: 3 \\
+	Attribute & Bin start & Bin 1 & Bin 2 \\
+	visitor_hist_adr_usd & $36.91$ & $168.25$ & $781.28$ 
+<util.estimator.RemoveKey object at 0x1a29c90668> visitor_hist_adr_usd
+	k removed visitor_hist_adr_usd
+<util.estimator.Wrapper object at 0x1a29c906d8> price_usd
+<util.estimator.Discretizer object at 0x1a29c90710> price_usd
+[32m	dicretize `price_usd`[0m
+	Discretize (bin) strategy: quantile & n bins: 3 \\
+	Attribute & Bin start & Bin 1 & Bin 2 \\
+	price_usd & $4.24$ & $99.0$ & $160.58$ & $250892.0$ 
+<util.estimator.RemoveKey object at 0x1a29c90748> price_usd
+	k removed price_usd
+[32m
+
+ ----- 
+ Transform test data 
+ ---- 
+
+[0m
+	k removed weekday
+	k removed site_id
+	k removed visitor_location_country_id
+	k removed prop_country_id
+	k removed srch_destination_id
+	k removed prop_starrating
+[32m	dicretize `srch_adults_count`[0m
+	Discretize (bin) strategy: uniform & n bins: 3 \\
+	Attribute & Number of bins (categories)
+[32m	dicretize `srch_children_count`[0m
+	Discretize (bin) strategy: uniform & n bins: 3 \\
+	Attribute & Number of bins (categories)
+[32m	dicretize `srch_room_count`[0m
+	Discretize (bin) strategy: uniform & n bins: 3 \\
+	Attribute & Number of bins (categories)
+[32m	dicretize `srch_length_of_stay`[0m
+	Discretize (bin) strategy: uniform & n bins: 3 \\
+	Attribute & Number of bins (categories)
+[32m	dicretize `srch_booking_window`[0m
+	Discretize (bin) strategy: uniform & n bins: 3 \\
+	Attribute & Number of bins (categories)
+[32m	dicretize `orig_destination_distance`[0m
+	Discretize (bin) strategy: quantile & n bins: 3 \\
+	Attribute & Bin start & Bin 1 & Bin 2 \\
+	orig_destination_distance & $0.01$ & $366.35$ & $397.84$ & $11631.95$ 
+[34m	GrossBooking transform[0m
+[32m	dicretize `visitor_hist_adr_usd`[0m
+	Discretize (bin) strategy: quantile & n bins: 3 \\
+	Attribute & Bin start & Bin 1 & Bin 2 \\
+	visitor_hist_adr_usd & $36.91$ & $168.25$ & $781.28$ 
+	k removed visitor_hist_adr_usd
+[32m	dicretize `price_usd`[0m
+	Discretize (bin) strategy: quantile & n bins: 3 \\
+	Attribute & Bin start & Bin 1 & Bin 2 \\
+	price_usd & $4.24$ & $99.0$ & $160.58$ & $250892.0$ 
+	k removed price_usd
+
+--------
+Done
