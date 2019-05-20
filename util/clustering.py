@@ -36,7 +36,7 @@ def init(data, n_clusters=10):
                    }
 
     models_item = {'KMeans': sklearn.cluster.KMeans(n_clusters, n_jobs=2, random_state=seed),
-                   # 'FeatureAgglomeration': FeatureAgglomeration(n_clusters),
+                   'FeatureAgglomeration': FeatureAgglomeration(n_clusters),
                    # 'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
                    }
     return keys_search, keys_property, models_user, models_item

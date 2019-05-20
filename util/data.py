@@ -99,7 +99,7 @@ def scores_df(data, k_user, k_item):
     assert k_item in data.columns
     # do not use .index,  because .loc may return multiple results
     for _, row in data.iterrows():
-        print(row[k_user])
+        # print(row[k_user])
         scores['user'].append(row[k_user])
         scores['item'].append(row[k_item])
         scores['score'].append(row['score'])
@@ -129,6 +129,15 @@ def select_most_common(data: pd.Series, n=9, key="Other", v=1) -> dict:
 def replace_uncommon(row: pd.Series, common_keys=[], other=''):
     # Replace all values that are not in `common_keys`
     return row.where(row.isin(common_keys), other, inplace=False)
+
+
+def replace_most_uncommon(data: pd.DataFrame, k=''):
+    value_counts = data[k].value_counts(ascending=True)
+    if value_counts.iloc[0] == 1:
+        data.loc[data[k] == value_counts.index[0], k] = value_counts.index[1]
+
+    # value_counts = data[k].value_counts(ascending=True)
+    # assert value_counts.iloc[0] > 1, value_counts
 
 
 def regress_booking(regData, fullK):
