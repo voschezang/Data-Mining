@@ -94,15 +94,27 @@ def scores_df(data, k_user, k_item):
     Surprise requires the order item-user-score
     user corresponds to search_id (i.e. a person), item to property id
     """
+    # sort unique values (assume duplicate values)
+    matrix = collections.defaultdict(dict)
+    for _, row in data.iterrows():
+        if k_item not in matrix[row[k_user]].keys():
+            matrix[row[k_user]][row[k_item]] = []
+        matrix[row[k_user]][row[k_item]].append(row['score'])
+
     scores = {'item': [], 'user': [], 'score': []}
     assert k_user in data.columns
     assert k_item in data.columns
     # do not use .index,  because .loc may return multiple results
-    for _, row in data.iterrows():
+    for user, items in matrix.items():
+        for item, scores_per_user in items.items():
+            scores['item'].append(item)
+            scores['user'].append(user)
+            scores['score'].append(np.median(scores_per_user))
+    # for _, row in data.iterrows():
         # print(row[k_user])
-        scores['user'].append(row[k_user])
-        scores['item'].append(row[k_item])
-        scores['score'].append(row['score'])
+        # scores['user'].append(row[k_user])
+        # scores['item'].append(row[k_item])
+        # scores['score'].append(row['score'])
     return pd.DataFrame(scores)
 
 
@@ -131,7 +143,7 @@ def replace_uncommon(row: pd.Series, common_keys=[], other=''):
     return row.where(row.isin(common_keys), other, inplace=False)
 
 
-def replace_most_uncommon(data: pd.DataFrame, k=''):
+def replace_extremely_uncommon(data: pd.DataFrame, k=''):
     value_counts = data[k].value_counts(ascending=True)
     if value_counts.iloc[0] == 1:
         data.loc[data[k] == value_counts.index[0], k] = value_counts.index[1]

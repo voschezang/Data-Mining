@@ -1,7 +1,7 @@
+import collections
 import numpy as np
 import sklearn
 import sklearn.ensemble
-import gc
 import sklearn.cluster
 import sklearn.metrics
 import pandas as pd
@@ -24,12 +24,15 @@ def init(data, n_clusters=10):
                      and k not in ['prop_id']]
     # keys_other += ['click_bool', 'booking_bool', 'gross_bookings_usd', 'random_bool', 'score', 'price_usd', 'position']
     keys_search = [k for k in data.columns
-                   if k not in keys_property
-                   and k not in ['srch_id', 'travel_distance', 'travel_distances',
-                             'click_bool', 'booking_bool', 'random_bool'] and
+                   if k not in keys_property and
+                   k not in ['srch_id', 'score', 'position', 'travel_distance',
+                                 'travel_distances', 'click_bool',
+                                 'booking_bool', 'random_bool'] and
                    'orig' not in k
                    and 'cluster' not in k]
 
+    assert [k in data.columns for k in keys_property]
+    assert [k in data.columns for k in keys_search]
     models_user = {'KMeans': sklearn.cluster.KMeans(n_clusters, n_jobs=2, random_state=seed),
                    'FeatureAgglomeration': FeatureAgglomeration(n_clusters),
                    # 'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
@@ -44,39 +47,15 @@ def init(data, n_clusters=10):
 
 def init_df_columns(data, models_user, models_item):
     for k in models_user.keys():
-        data[USER_KEY_PREFIX + k] = np.nan
+        data[USER_KEY_PREFIX + k] = pd.Series()
     for k in models_item.keys():
-        data[ITEM_KEY_PREFIX + k] = np.nan
-
-
-# def train(data, keys_search, keys_property, models_user, models_item):
-    # # train user model
-    # print('train user model')
-    # train_models(data, models_user, keys_search, 'srch_id', USER_KEY_PREFIX)
-    # # train item model
-    # print('train item model')
-    # train_models(data, models_item, keys_property, 'prop_id', ITEM_KEY_PREFIX)
+        data[ITEM_KEY_PREFIX + k] = pd.Series()
 
 
 def fit(data, models, keys, k):
     x_train = sample_and_shuffle(data, keys, k=k)
-    for k, model in models.items():
+    for model in models.values():
         model.fit(x_train)
-        # indices = data.index
-        # y_pred = model.predict(data.loc[indices, keys])
-        # assert data.loc[indices].shape[0] == y_pred.shape[0]
-        # # this line will print a SettingWithCopyWarning
-        # key = prefix + k
-        # data.loc[indices, key] = y_pred
-        # # prediction_keys .append(key)
-        #
-        # # data.loc[indices, prefix + k] = 1
-        # # data.loc(axis=0)[0, prefix + k] = 2
-        # # for i in indices:
-        # # data.loc[indices[i], prefix  + k] = y_pred[i]
-
-    # assert not data[prefix + k].isna().all()
-    # return data[prediction_keys]
 
 
 def predict(data, models, keys, k, prefix):
@@ -121,6 +100,17 @@ def sample_and_shuffle(data, keys, k='srch_id', rm_first_column=True):
     data_unique_rows = extract_data(data, keys, k)
     sample = data_unique_rows.sample(frac=1, random_state=seed)
     return sample
+
+
+def svd_predict(model, scores: pd.DataFrame):
+    # Return a dict {user: {item: predicted score}}
+    results = collections.defaultdict(dict)
+    for _, row in scores.iterrows():
+        item = row['item']
+        user = row['user']
+        result = model.predict(str(item), str(user), verbose=0)
+        results[user][item] = result.est
+    return results
 
 
 class FeatureAgglomeration(sklearn.cluster.FeatureAgglomeration):
