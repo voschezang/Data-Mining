@@ -61,18 +61,21 @@ def fit(data, models, keys, k, shuffle=False):
 
 
 def predict(data, models, keys, k, prefix):
+    # return predictions of each model
     # TODO rm k in farg
     indices = data.index
     prediction_keys = []
+    data_pred = data[[k]].copy()
     for k, model in models.items():
         print('\tPredict using %s (k: `%s`)' % (k, prefix + k), model)
         print(data[keys].shape)
         y_pred = model.predict(data[keys])
         key = prefix + k
         print('save pred to data')
-        data.loc[indices, key] = y_pred
+        data_pred[key] = pd.Series()
+        data_pred.loc[indices, key] = y_pred
         prediction_keys.append(key)
-    return data[prediction_keys]
+    return data_pred[prediction_keys]
 
 
 def extract_data(data, keys, k='srch_id'):
@@ -105,3 +108,18 @@ class FeatureAgglomeration(sklearn.cluster.FeatureAgglomeration):
     def predict(self, x_test):
         cluster_distances = self.transform(x_test)
         return np.argmin(cluster_distances, axis=1)
+
+
+class VotingRegressor:
+    # TODO update sklearn and use sklearn.ensemble.VotingRegressor
+    def __init__(self, estimators):
+        # estimators = list of tuples (key, estimator)
+        print('init', self)
+        self.estimators = estimators
+
+    def predict(self, X):
+        predictions_per_est = []
+        print('\tpredict X', self)
+        for i, (_, est) in enumerate(self.estimators):
+            predictions_per_est .append(est.predict(X))
+        return np.median(predictions_per_est, axis=0)

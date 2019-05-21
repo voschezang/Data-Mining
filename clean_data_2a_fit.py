@@ -14,7 +14,7 @@ np.random.seed(seed)
 # 'data/training_set_VU_DM_clean.csv', sep=';', nrows=10 * 1000)
 data_all = pd.read_csv('data/training_set_VU_DM_clean.csv', sep=';')
 
-n = 5
+n = 10
 folds = util.data.cv_folds_for_sklearn(
     data_all, n_cv_folds=n, resampling_ratio=0)
 i_majority, i_minority = folds[0]
