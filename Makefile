@@ -8,11 +8,11 @@ clean:
 clean-no-save:
 	python3 clean_data.py
 
-clean2:
-	python3 clean_data_2.py
+clean2a:
+	python3 clean_data_2a_fit.py
 
-cf-matrix:
-	python3 build_cf_matrix.py
+clean2b:
+	python3 clean_data_2b_transform.py
 
 train:
 	python3 model_training.py

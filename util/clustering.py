@@ -20,16 +20,16 @@ def init(data, n_clusters=50):
     assert data.shape[0] > 10 * n_clusters
     # split columns into srch and prop
     # rm irrelevant info
-    keys_property = [k for k in data.columns if ('comp' in k or 'prop' in k or 'site' in k or 'price_usd' in k)
-                     and k not in ['prop_id']]
+    keys_property = [k for k in data.columns if ('comp' in k or 'prop' in k or 'site' in k or 'price_usd' in k) and
+                     k not in ['prop_id']]
     # keys_other += ['click_bool', 'booking_bool', 'gross_bookings_usd', 'random_bool', 'score', 'price_usd', 'position']
     keys_search = [k for k in data.columns
-                   if k not in keys_property and
-                   k not in ['srch_id', 'score', 'position', 'travel_distance',
-                                 'travel_distances', 'click_bool',
+                   if k not in keys_property
+                   and k not in ['srch_id', 'score', 'position', 'travel_distance',
+                             'travel_distances', 'click_bool',
                                  'booking_bool', 'random_bool'] and
-                   'orig' not in k
-                   and 'cluster' not in k]
+                   'orig' not in k and
+                   'cluster' not in k]
 
     assert [k in data.columns for k in keys_property]
     assert [k in data.columns for k in keys_search]
@@ -74,31 +74,11 @@ def predict(data, models, keys, k, prefix):
         prediction_keys.append(key)
     return data[prediction_keys]
 
-    # print('predict items')
-    # for k, model in models_item.items():
-    #     print('\t%s' % k)
-    #     # data.loc[:, ITEM_KEY_PREFIX + k] = model.predict(data[keys_property])
-    #     y_pred = model.predict(data[keys_property])
-    #     data.loc[indices, key] = y_pred
-    #     # for i in indices:
-    #     # data.loc[indices[i], ITEM_KEY_PREFIX + k] = y_pred[i]
-
 
 def extract_data(data, keys, k='srch_id'):
     # select unique rows, based on keys
     print('\textract_data(k: %s)' % k)
-    # data = data[keys + [k]]
-    # return data[keys + [k]].drop_duplicates(subset=k)
     return data[keys + [k]].drop_duplicates(subset=k)[keys]
-    # assert data_unique_rows.shape[0] == data[k].unique().size, \
-    #     'if key (srch_id) is equal, all non-property attributes should be equal as well'
-    #
-    # # assert data_unique_rows[k].min(
-    # # ) > 0, 'search id must be positive and nonzero'
-    # # assert ~data_unique_rows[k].isna().any()
-    # # assert ~data_unique_rows.isna().any().any()
-    # # assert ~data_unique_rows.isin([np.nan, np.inf, -np.inf]).any().any()
-    # return data_unique_rows[keys]
 
 
 def sample_and_shuffle(data, keys, k='srch_id', rm_first_column=True, shuffle=False):
