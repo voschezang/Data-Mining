@@ -17,7 +17,7 @@ data_all = pd.read_csv('data/training_set_VU_DM_clean.csv', sep=';')
 
 # TODO use higher resampling ratio
 folds = util.data.cv_folds_for_sklearn(
-    data_all, n_cv_folds=5, resampling_ratio=0)
+    data_all, n_cv_folds=10, resampling_ratio=0)
 i_majority, i_minority = folds[0]
 # TODO use ensemble for each fold
 print('len i_train: %i' % i_minority.size)
@@ -57,8 +57,8 @@ class VotingRegressor:
         self.estimators = estimators
 
     def predict(self, X):
-        # return np.mean([est.predict(X) for _k, est in self.estimators], axis=0)
-        return self.estimators[0][1].predict(X)
+        return np.median([est.predict(X) for _k, est in self.estimators], axis=0)
+        # return self.estimators[0][1].predict(X)
 
 
 model_user = VotingRegressor(
