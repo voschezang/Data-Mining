@@ -35,13 +35,14 @@ def init(data, n_clusters=50):
     assert [k in data.columns for k in keys_search]
     models_user = {'KMeans': sklearn.cluster.KMeans(n_clusters, n_jobs=2, random_state=seed),
                    'FeatureAgglomeration': FeatureAgglomeration(n_clusters=24),
-                   'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
+                   'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=30)
                    }
 
     models_item = {'KMeans': sklearn.cluster.KMeans(n_clusters, n_jobs=2, random_state=seed),
                    'FeatureAgglomeration': FeatureAgglomeration(n_clusters=24),
                    'AffinityPropagation': sklearn.cluster.AffinityPropagation(convergence_iter=15, damping=0.5, max_iter=50)
                    }
+    init_df_columns(data, models_user, models_item)
     return keys_search, keys_property, models_user, models_item
 
 
@@ -52,19 +53,23 @@ def init_df_columns(data, models_user, models_item):
         data[ITEM_KEY_PREFIX + k] = pd.Series()
 
 
-def fit(data, models, keys, k):
-    x_train = sample_and_shuffle(data, keys, k=k)
+def fit(data, models, keys, k, shuffle=False):
+    x_train = sample_and_shuffle(data, keys, k=k, shuffle=shuffle)
     for model in models.values():
+        print('fit model', model, x_train.shape)
         model.fit(x_train)
 
 
 def predict(data, models, keys, k, prefix):
+    # TODO rm k in farg
     indices = data.index
     prediction_keys = []
     for k, model in models.items():
-        print('\t%s (k: `%s`)' % (k, prefix + k))
+        print('\tPredict using %s (k: `%s`)' % (k, prefix + k), model)
+        print(data[keys].shape)
         y_pred = model.predict(data[keys])
         key = prefix + k
+        print('save pred to data')
         data.loc[indices, key] = y_pred
         prediction_keys.append(key)
     return data[prediction_keys]
@@ -82,24 +87,27 @@ def predict(data, models, keys, k, prefix):
 def extract_data(data, keys, k='srch_id'):
     # select unique rows, based on keys
     print('\textract_data(k: %s)' % k)
-    data = data[keys + [k]]
-    data_unique_rows = data.drop_duplicates(subset=k)
-    assert data_unique_rows.shape[0] == data[k].unique().size, \
-        'if key (srch_id) is equal, all non-property attributes should be equal as well'
+    # data = data[keys + [k]]
+    # return data[keys + [k]].drop_duplicates(subset=k)
+    return data[keys + [k]].drop_duplicates(subset=k)[keys]
+    # assert data_unique_rows.shape[0] == data[k].unique().size, \
+    #     'if key (srch_id) is equal, all non-property attributes should be equal as well'
+    #
+    # # assert data_unique_rows[k].min(
+    # # ) > 0, 'search id must be positive and nonzero'
+    # # assert ~data_unique_rows[k].isna().any()
+    # # assert ~data_unique_rows.isna().any().any()
+    # # assert ~data_unique_rows.isin([np.nan, np.inf, -np.inf]).any().any()
+    # return data_unique_rows[keys]
 
-    assert data_unique_rows[k].min(
-    ) > 0, 'search id must be positive and nonzero'
-    assert ~data_unique_rows[k].isna().any()
-    assert ~data_unique_rows.isna().any().any()
-    assert ~data_unique_rows.isin([np.nan, np.inf, -np.inf]).any().any()
-    return data_unique_rows[keys]
 
-
-def sample_and_shuffle(data, keys, k='srch_id', rm_first_column=True):
+def sample_and_shuffle(data, keys, k='srch_id', rm_first_column=True, shuffle=False):
     # sample & shuffle
     data_unique_rows = extract_data(data, keys, k)
-    sample = data_unique_rows.sample(frac=1, random_state=seed)
-    return sample
+    print('n_keys', len(keys + [k]), k)
+    if shuffle:
+        return data_unique_rows.sample(frac=1, random_state=seed)
+    return data_unique_rows
 
 
 def svd_predict(model, scores: pd.DataFrame):

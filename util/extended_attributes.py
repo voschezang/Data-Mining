@@ -86,6 +86,8 @@ class ExtendAttributes(Estimator):
     def fit(self, data):
         data.drop(columns=['position'], inplace=True)
         data['score'] = util.data.click_book_score(data)
+
+    def transform(self, data):
         # ignored keys will be imputed later
         keys_to_be_imputed = [ExtendedAttributes.delta_starrating,
                               ExtendedAttributes.srch_person_per_room_score,
@@ -95,6 +97,3 @@ class ExtendAttributes(Estimator):
                               'orig_destination_distance'
                               ] + [k for k in data.columns if 'score' in k or 'usd' in k]
         util.data.rm_na(data, ignore=keys_to_be_imputed)
-
-    def transform(self, data):
-        pass
