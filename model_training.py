@@ -3,6 +3,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.datasets import make_friedman1
 from sklearn.metrics import mean_squared_error
 import sklearn.model_selection as ms
+import sklearn.feature_extraction as fe
 
 import pandas as pd
 from matplotlib import rcParams
@@ -10,6 +11,7 @@ import matplotlib.pyplot as plt
 import pickle
 import util.plot
 import util.data
+import util.ndcg
 import numpy as np
 from pandas.plotting import scatter_matrix
 import sklearn.model_selection as ms
@@ -110,10 +112,19 @@ rfReg = RandomForestRegressor(n_estimators=100)
 rfReg.fit(trainX[varsUsed], trainY['score'])
 a3 = rfReg.predict(testX[varsUsed])
 print(mean_squared_error(testY['score'], est.predict(testX[varsUsed])))
-rfreg_tuned_parameters = [{'max_depth':[1,2,4,5],'n_estimators':[50,100,150,200,300]}]
+rfreg_tuned_parameters = [{'max_depth':[1,2,3],'n_estimators':[50,100,150,200]}]
 rfregGS = ms.GridSearchCV(RandomForestRegressor(),rfreg_tuned_parameters,cv=5,scoring='neg_mean_squared_error')
 rfregGS.fit(trainX[varsUsed],trainY['score'])
-
+a1 = ms.ParameterGrid(rfreg_tuned_parameters)
+scoresave = np.zeros(len(a1))
+for i in range(len(a1)):
+    rfregmgs = RandomForestRegressor(**a1[i])
+    rfregmgs.fit(trainX[varsUsed],trainY['score'])    
+    y_pred = rfregmgs.predict(testX[varsUsed])
+    ndcg = util.ndcg.ndcg(testX[['srch_id','prop_id']],  testY['score'], y_pred)
+    ndcg
+    scoresave[i] = ndcg
+    
 adaReg = AdaBoostRegressor()
 adaReg.fit(trainX[varsUsed],trainY['score'])
 print(mean_squared_error(testY['score'],adaReg.predict(testX[varsUsed])))
@@ -133,7 +144,7 @@ est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
 adaTestX = testX[['srch_id','prop_id']]
 adaTestY = testY
 adaTestY['srch_id'] = testX['srch_id']
-adaTestX['score'] = est.predict(testX[varsUsed])
+adaTestX['score'] = adaReg.predict(testX[varsUsed])
 # sort test set predicted scores from high scores to low scores
 adaTestX = adaTestX.iloc[1:100000,:]
 adaTestY = adaTestY.iloc[1:100000,:]
@@ -143,6 +154,46 @@ adaTestX = adaTestX.sort_values(['srch_id', 'score'], ascending=[True, False])
 # create new column to store position of prop_id
 adaTestX['position'] = pd.Series()
 
+
+
+
+# fit model to test set
+y_pred = adaReg.predict(testX[varsUsed])
+# X_test['score'] = preds
+
+
+# calculate dcg of test set per srch_id
+Xy_pred = util.data.Xy_pred(testX[['srch_id','prop_id']], y_pred)
+
+# put true y values on indexes, do not sort !
+Xy_pred['score'] = testY['score']
+
+# calculate ideal dcg of test set per srch_id
+Xy_true = util.data.Xy_pred(testX[['srch_id','prop_id']], testY['score'])
+
+# calculate NDCG
+ndcg = util.ndcg.ndcg(testX[['srch_id','prop_id']],  testY['score'], y_pred)
+ndcg
+
+
+
+
+
+finalTestSet = pd.read_csv('data/test_set_VU_DM_clean-001.csv', sep=';')
+finaltestPred = est.predict(finalTestSet[varsUsed])
+finalFrame = finalTestSet[['srch_id','prop_id']]
+finalFrame['scores'] = finaltestPred
+finalFrame = finalFrame.sort_values(['srch_id','scores'], ascending=[True,False])
+finalFrame = finalFrame.drop(['scores'],axis=1)
+finalFrame.to_csv('data/FinalPreds.csv',index=False)
+
+
+
+
+
+
+
+'''
 # save position prop_id
 prev_srch_id = -1
 for i in adaTestX.index.tolist():
@@ -190,5 +241,5 @@ print(np.mean(list(ndcg_control.values())))
 # normalize
 ndcg = np.mean(list(ndcg_test.values())) / np.mean(list(ndcg_control.values()))
 ndcg
-
+'''
 
