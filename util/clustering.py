@@ -68,7 +68,7 @@ def predict(data, models, keys, k, prefix):
     data_pred = data[[k]].copy()
     for k, model in models.items():
         print('\tPredict using %s (k: `%s`)' % (k, prefix + k), model)
-        print(data[keys].shape)
+        assert model.estimators is not None
         y_pred = model.predict(data[keys])
         key = prefix + k
         print('save pred to data')
@@ -114,12 +114,13 @@ class VotingRegressor:
     # TODO update sklearn and use sklearn.ensemble.VotingRegressor
     def __init__(self, estimators):
         # estimators = list of tuples (key, estimator)
-        print('init', self)
+        print('init VotingRegressor')
         self.estimators = estimators
 
     def predict(self, X):
         predictions_per_est = []
         print('\tpredict X', self)
+        assert self.estimators is not None
         for i, (_, est) in enumerate(self.estimators):
             predictions_per_est .append(est.predict(X))
         return np.median(predictions_per_est, axis=0)

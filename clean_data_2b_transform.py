@@ -15,7 +15,8 @@ data_all = pd.read_csv(
 # data_all = pd.read_csv('data/training_set_VU_DM_clean.csv', sep=';')
 
 n = 10
-# n = 5
+n = 2
+n_chuncks = 10
 k_user = 'AffinityPropagation'
 k_item = 'FeatureAgglomeration'
 k_user_long = clustering.USER_KEY_PREFIX + k_user
@@ -30,6 +31,7 @@ def load_user_model():
         print(i, 'data/est_user_%i.pkl' % i)
         with open('data/est_user_%i.pkl' % i, 'rb') as f:
             models_user.append(pickle.load(f))
+
     model_user = clustering.VotingRegressor(
         [(str(i), reg) for i, reg in enumerate(models_user)])
     return model_user
@@ -49,32 +51,31 @@ def load_item_model():
 def gc_collect(ensemble_model: clustering.VotingRegressor):
     for i, _ in enumerate(ensemble_model.estimators):
         ensemble_model.estimators[i] = None
-    ensemble_model = None
     gc.collect()
 
 
 model_user = load_user_model()
-print('Transform training data (users)')
-# for indices in np.split(np.arange(data_all.shape[0])):
-# ..
-result = clustering.predict(data_all, {k_user: model_user}, keys_search,
-                            'srch_id', clustering.USER_KEY_PREFIX)
-# users = users[clustering.USER_KEY_PREFIX + k_user]
-data_all[k_user_long] = result[k_user_long]
-# data_all.loc[indices, ..] = ..
+print('\nTransform training data (users)', model_user)
+for indices in np.array_split(np.arange(data_all.shape[0]), n_chuncks):
+    result = clustering.predict(data_all.loc[indices], {k_user: model_user},
+                                keys_search, 'srch_id', clustering.USER_KEY_PREFIX)
+    # users = users[clustering.USER_KEY_PREFIX + k_user]
+    data_all.loc[indices, k_user_long] = result[k_user_long]
+    result = None
+    gc.collect()
 # enforce disallocation of memory
-result = None
 gc_collect(model_user)
-
 
 model_item = load_item_model()
 print('Transform training data (items)')
-result = clustering.predict(data_all, {k_item: model_item}, keys_property,
-                            'prop_id', clustering.ITEM_KEY_PREFIX)
-# items = items[clustering.ITEM_KEY_PREFIX + k_item]
-data_all[k_item_long] = result[k_item_long]
+for indices in np.array_split(np.arange(data_all.shape[0]), n_chuncks):
+    result = clustering.predict(data_all.loc[indices], {k_item: model_item},
+                                keys_property, 'prop_id', clustering.ITEM_KEY_PREFIX)
+    # items = items[clustering.ITEM_KEY_PREFIX + k_item]
+    data_all.loc[indices, k_item_long] = result[k_item_long]
+    result = None
+    gc.collect()
 # enforce disallocation of memory
-result = None
 gc_collect(model_item)
 
 print('\nsetup scores df (1)')
