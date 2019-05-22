@@ -102,19 +102,12 @@ def scores_df(data, k_user, k_item):
         matrix[row[k_user]][row[k_item]].append(row['score'])
 
     scores = {'item': [], 'user': [], 'score': []}
-    assert k_user in data.columns
-    assert k_item in data.columns
     # do not use .index,  because .loc may return multiple results
     for user, items in matrix.items():
         for item, scores_per_user in items.items():
             scores['item'].append(item)
             scores['user'].append(user)
             scores['score'].append(np.median(scores_per_user))
-    # for _, row in data.iterrows():
-        # print(row[k_user])
-        # scores['user'].append(row[k_user])
-        # scores['item'].append(row[k_item])
-        # scores['score'].append(row['score'])
     return pd.DataFrame(scores)
 
 
