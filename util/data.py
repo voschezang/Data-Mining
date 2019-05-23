@@ -29,19 +29,20 @@ def split_xy(data: pd.DataFrame,
     return x, y
 
 
-def Xy_pred(x_test: pd.DataFrame, y_pred: np.ndarray, save=False):
+def Xy_pred(x_test: pd.DataFrame, y_pred: np.ndarray, save=False, **kwargs):
     y = to_df(x_test, y_pred)
     y = y.sort_values(['srch_id', 'score'], ascending=[True, False])
     if save:
-        save_y_pred(y)
+        save_y_pred(y, **kwargs)
     return y
 
 
-def save_y_pred(y_pred):
+def save_y_pred(y_pred, suffix=''):
     # assume y_pred is sorted
     # .rename(columns={'srch_id': 'SearchId', 'prop_id': 'PropertyId'}, inplace=False)
     y = y_pred[['srch_id', 'prop_id']]
-    y.to_csv('data/y_pred_result.csv', sep=',', index=False)
+    y.to_csv('data/y_pred_result_%s.csv' % suffix, sep=',', index=False)
+    print('saved to `data/y_pred_result_%s.csv`' % suffix)
 
 
 def y_pred_multi(x_test: pd.DataFrame, y_preds=[], weights=[], **kwargs):
