@@ -47,7 +47,8 @@ model_item = clustering.load_item_model(n)
 for indices in np.array_split(np.arange(data.shape[0]), n_chuncks):
     print('\t pred item chunck')
     items = model_item.predict(data.loc[indices, keys_property])
-    data_clusters.loc[indices, 'items'] = items
+    # `item` should be clustering.ITEM_KEY_PREFIX + k_item (?), idem for user
+    data_clusters.loc[indices, 'item'] = items
     items = None
     gc.collect()
 clustering.gc_collect(model_item)

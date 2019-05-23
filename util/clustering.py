@@ -44,16 +44,16 @@ def init(data, n_clusters=50):
     assert data.shape[0] > 10 * n_clusters
     # split columns into srch and prop
     # rm irrelevant info
-    keys_property = [k for k in data.columns if ('comp' in k or 'prop' in k or 'site' in k or 'price_usd' in k)
-                     and k not in ['prop_id']]
+    keys_property = [k for k in data.columns if ('comp' in k or 'prop' in k or 'site' in k or 'price_usd' in k) and
+                     k not in ['prop_id']]
     # keys_other += ['click_bool', 'booking_bool', 'gross_bookings_usd', 'random_bool', 'score', 'price_usd', 'position']
     keys_search = [k for k in data.columns
-                   if k not in keys_property and
-                   k not in ['srch_id', 'score', 'position', 'travel_distance',
-                                 'travel_distances', 'click_bool',
+                   if k not in keys_property
+                   and k not in ['srch_id', 'score', 'position', 'travel_distance',
+                             'travel_distances', 'click_bool',
                                  'booking_bool', 'random_bool'] and
-                   'orig' not in k
-                   and 'cluster' not in k]
+                   'orig' not in k and
+                   'cluster' not in k]
 
     assert [k in data.columns for k in keys_property]
     assert [k in data.columns for k in keys_search]
@@ -119,23 +119,26 @@ def sample_and_shuffle(data, keys, k='srch_id', rm_first_column=True, shuffle=Fa
     return data_unique_rows
 
 
-def svd_predict(model, scores: pd.DataFrame, data_all=None):
+def svd_predict(model, scores: pd.DataFrame, data_all_clusters=None, k_user='user', k_item='item'):
+    # data_all_clusters :: {index, k_user, k_item, true score}
     # Return a df {user: {item: predicted score}}
-    if data_all is not None:
-        data = data_all[['score']].copy()
+    if data_all_clusters is not None:
+        scores = None
+        data = data_all_clusters[['score']].copy()
         # make individual predicitons, to reduce memory overhead
         # data_all['score_svd'] = pd.Series()
-        for i, row in scores.iterrows():
-            i_n = 10 * 1000
+        # for i, row in scores.iterrows():
+        for i, row in data_all_clusters.iterrows():
+            i_n = 100 * 1000
             if i % i_n == 0:
-                print('\tsvd predict, row: %i \t*%i \t /%i' %
-                      (i / i_n, i_n, scores.shape[0]))
+                print('\tsvd predict, row: %i \t* %i \t /%i' %
+                      (i / i_n, i_n, data_all_clusters.shape[0]))
             # for i, row in data_all.iterrows():
-            row = scores.loc[i]
-            item = row['item']
-            user = row['user']
-            score = model.predict(str(item), str(user), verbose=0).est
-            data.loc[i, 'score_svd'] = score
+            # row = scores.loc[i]
+            item = row[k_item]
+            user = row[k_user]
+            result = model.predict(str(item), str(user), verbose=0)
+            data.loc[i, 'score_svd'] = result.est
         return data['score_svd']
 
     results = collections.defaultdict(dict)

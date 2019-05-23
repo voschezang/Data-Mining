@@ -55,6 +55,7 @@ print('\nsetup scores df (1)')
 k_user = clustering.USER_KEY_PREFIX + k_user
 k_item = clustering.ITEM_KEY_PREFIX + k_item
 
+# data_all_clusters :: {index, k_user, k_item, true score}
 data_all_clusters = data_all[[k_user, k_item, 'score']]
 data_all_clusters.to_csv(
     'data/clustering_data_train.csv', sep=';', index=False)
@@ -62,6 +63,7 @@ data_all = None
 gc.collect()
 
 print('setup scores df (2)')
+# scores_train :: {index, item, user, score}, with missing values?
 scores_train = util.data.scores_df(data_all_clusters, k_user, k_item)
 scores_train.to_csv('data/clustering_scores_train.csv',
                     sep=';', index=True)

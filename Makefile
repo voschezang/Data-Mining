@@ -14,6 +14,15 @@ clean2a:
 clean2b:
 	python3 clean_data_2b_transform.py
 
+clean2c:
+	python3 clean_data_2c_svd.py
+
+clean2d:
+	python3 clean_data_2d_testset.py
+
+clean2e:
+	python3 clean_data_2e_predict_testset.py
+
 train:
 	python3 model_training.py
 
